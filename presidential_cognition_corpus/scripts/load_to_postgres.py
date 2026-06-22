@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS linguistic_features (
     speech_id                   text PRIMARY KEY REFERENCES speeches(id) ON DELETE CASCADE,
     n_words                     int,
     mtld                        real,
+    idea_density                real,
     mattr_50                    real,
     type_token_ratio            real,
     first_person_singular_ratio real,
@@ -101,10 +102,13 @@ CREATE TABLE IF NOT EXISTS llm_extractions (
     created_at      timestamptz DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS llm_extractions_speech_idx ON llm_extractions (speech_id);
+
+-- promote newer feature columns on pre-existing tables (idempotent)
+ALTER TABLE linguistic_features ADD COLUMN IF NOT EXISTS idea_density real;
 """
 
 # Promoted feature columns mirrored from linguistic_features.csv (rest -> JSONB).
-PROMOTED = ["n_words", "mtld", "mattr_50", "type_token_ratio",
+PROMOTED = ["n_words", "mtld", "idea_density", "mattr_50", "type_token_ratio",
             "first_person_singular_ratio", "first_person_plural_ratio",
             "i_to_we_ratio", "mean_dependency_distance", "subordination_ratio",
             "indefinite_noun_ratio", "hedge_ratio", "vader_compound",
