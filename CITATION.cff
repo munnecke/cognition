@@ -9,9 +9,9 @@ abstract: >-
   independent replication of Berisha et al. (2015).
 type: software
 authors:
-  # TODO: set your name as you want it cited.
+  # TODO: confirm given name, and the affiliation domain (cosmosrearch.center?).
   - family-names: "Munnecke"
-    given-names: ""
+    affiliation: "Cosmos Research Center (cosmosrearch.center)"
     email: "munnecke@gmail.com"
 repository-code: "https://github.com/munnecke/cognition"
 url: "https://github.com/munnecke/cognition"
