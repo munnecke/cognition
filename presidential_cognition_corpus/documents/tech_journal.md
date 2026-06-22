@@ -50,13 +50,18 @@ such trends — detectable years before Reagan's clinical diagnosis.
 | ns_plus_fillers   | +0.423 | 0.0038 |    +0.358 |     0.017 | sig-pos |  ✓    |
 | li_verbs          | +0.055 | 0.7312 |    +0.032 |     0.835 | null    |  ✓    |
 
-**Bush 41 (control) — both nulls reproduce; one marginal artifact on incomplete data:**
+**Bush 41 (control, COMPLETE term 1989-1992, n=101) — 3/3 verdicts match (all null):**
 
 | feature           | ours R | ours p | Berisha R | Berisha p | verdict | match |
 |-------------------|-------:|-------:|----------:|----------:|---------|:-----:|
-| unique_words      | −0.229 | 0.0461 |    −0.098 |     0.343 | sig-neg | DIFF  |
-| ns_plus_fillers   | −0.069 | 0.5477 |    +0.053 |     0.608 | null    |  ✓    |
-| li_verbs          | −0.113 | 0.3257 |    −0.099 |     0.333 | null    |  ✓    |
+| unique_words      | −0.138 | 0.179  |    −0.098 |     0.343 | null    |  ✓    |
+| ns_plus_fillers   | +0.017 | 0.865  |    +0.053 |     0.608 | null    |  ✓    |
+| li_verbs          | +0.042 | 0.682  |    −0.099 |     0.333 | null    |  ✓    |
+
+*(Updated 2026-06-22 once Bush's full term finished collecting — exactly 101 of
+137 conferences clear the 1,400-word threshold, matching the paper. The marginal
+unique-word artifact seen on the overnight-truncated data, p=0.046, cleared to
+p=0.179 on the complete term. Final tally: 6/6 verdicts match.)*
 
 ### Interpretation
 - **Reagan replicates cleanly.** Both headline AD-signal trends reproduce as
@@ -64,12 +69,11 @@ such trends — detectable years before Reagan's clinical diagnosis.
   coefficient differences (−0.406 vs −0.446) are expected from independent
   reimplementation (segmentation heuristics, tokenizer, outlier edges); the
   *scientific conclusions are identical.*
-- **Bush control: caveat.** Both null results reproduce. The lone `DIFF`
-  (unique-words marginally significant for us, p=0.046, vs null for them) is on
-  **incomplete data** — at run time our Bush set ended **1991-11-08** (collection
-  still mid-Bush), missing all of 1992. A trend fit to a truncated early-term
-  window is exactly where a spurious marginal correlation appears. **Re-run the
-  Bush control once collection completes** (expected to clear the artifact).
+- **Bush control: clean (after full collection).** All three null results
+  reproduce. An earlier run on the overnight-truncated Bush set (ended 1991-11-08,
+  missing 1992) showed a spurious marginal unique-word trend (p=0.046); re-running
+  on his **complete** term cleared it to p=0.179 (null), matching the paper — a
+  good reminder that longitudinal trends are sensitive to full-span coverage.
 
 **Verdict: pipeline validated against published work.** Notes on `li_verbs`: the
 14-verb low-imageability set is an approximate light-verb list pending exact
