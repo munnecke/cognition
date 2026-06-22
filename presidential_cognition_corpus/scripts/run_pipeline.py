@@ -93,8 +93,10 @@ def main():
 
     import compute_metrics
     import os as _os
+    # Cap workers at 4: each spaCy worker loads the model (~hundreds of MB); more
+    # than this risks memory/swap exhaustion when other apps are running.
     _safe("compute_metrics", compute_metrics.run, False, None,
-          max(1, (_os.cpu_count() or 4) - 2))   # parallel sentence-splitting
+          min(4, max(1, (_os.cpu_count() or 4) - 2)))
 
     if args.features:
         import extract_features
