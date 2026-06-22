@@ -65,6 +65,10 @@ FILLER_WORDS = {"uh", "um", "er", "ah", "hmm", "mm", "erm", "uhh", "umm"}
 # Closed-class (function-word) POS tags.
 FUNCTION_POS = {"ADP", "AUX", "CCONJ", "DET", "PART", "PRON", "SCONJ"}
 CONTENT_POS = {"NOUN", "PROPN", "VERB", "ADJ", "ADV"}
+# Proposition-bearing POS for CPIDR-style idea (propositional) density —
+# Kintsch's propositions; Brown et al. (2008) CPIDR; the Nun Study marker.
+# AUX excluded so auxiliary + main verb aren't double-counted as two propositions.
+PROPOSITION_POS = ("VERB", "ADJ", "ADV", "ADP", "CCONJ", "SCONJ")
 # Dependency relations that head a subordinate clause.
 SUBORD_DEPS = {"advcl", "ccomp", "xcomp", "acl", "relcl", "csubj", "csubjpass"}
 CLAUSE_DEPS = {"ROOT", "advcl", "ccomp", "xcomp", "acl", "relcl", "csubj",
@@ -224,6 +228,8 @@ def compute_features(doc, body: str) -> dict:
         "mattr_50": mattr(low),
         "content_ttr": _ratio(len(set(content_lemmas)), len(content_lemmas)),
         "hapax_ratio": _ratio(hapax, n_words),
+        # propositional/idea density (CPIDR-style: proposition POS / total words)
+        "idea_density": _ratio(sum(pos[p] for p in PROPOSITION_POS), n_words),
         # pronouns / POS
         "pronoun_ratio": _ratio(pos["PRON"], n_words),
         "first_person_singular_ratio": _ratio(fps, n_words),
@@ -250,7 +256,7 @@ def compute_features(doc, body: str) -> dict:
 def _blank_features() -> dict:
     """Used when spaCy is unavailable so the columns still exist."""
     keys = ["n_words", "n_sentences", "type_token_ratio", "mtld", "mattr_50",
-            "content_ttr", "hapax_ratio", "pronoun_ratio",
+            "content_ttr", "hapax_ratio", "idea_density", "pronoun_ratio",
             "first_person_singular_ratio", "first_person_plural_ratio",
             "i_to_we_ratio", "noun_ratio", "verb_ratio", "adjective_ratio",
             "adverb_ratio", "function_word_ratio", "mean_dependency_distance",
