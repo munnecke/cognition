@@ -1,0 +1,54 @@
+title: Presidential Cognition Corpus
+description_html: |-
+  <p>Longitudinal corpus of U.S. presidential <em>spoken</em> material (Reagan &rarr;
+  present) for linguistic / cognitive analysis. Browse speeches, search full text,
+  and explore the deterministic NLP features. Read-only mirror of the Postgres
+  system of record (rebuilt by <code>scripts/build_browser.sh</code>).</p>
+license: ""
+databases:
+  corpus:
+    tables:
+      speeches:
+        description: One row per transcript. Full text is searchable (FTS).
+        sort_desc: date
+        facets: [president_key, type, source, year]
+      linguistic_features:
+        description: Deterministic spaCy / lexical-diversity / VADER features, 1:1 with speeches.
+      presidents:
+        description: One row per president.
+    queries:
+      counts_by_president_and_type:
+        title: Speech counts by president and type
+        sql: |-
+          SELECT president_key, type, count(*) AS n
+          FROM speeches
+          GROUP BY president_key, type
+          ORDER BY president_key, n DESC
+      news_conferences:
+        title: News conferences (the Berisha replication source)
+        sql: |-
+          SELECT date, president_key, word_count, title
+          FROM speeches
+          WHERE lower(title) LIKE '%news conference%'
+          ORDER BY date
+      lexical_diversity_over_time:
+        title: Lexical diversity (MTLD) by president and year
+        sql: |-
+          SELECT s.president_key, s.year,
+                 round(avg(f.mtld), 1) AS avg_mtld,
+                 round(avg(f.i_to_we_ratio), 3) AS avg_i_to_we,
+                 count(*) AS n
+          FROM speeches s
+          JOIN linguistic_features f ON f.speech_id = s.id
+          WHERE s.year IS NOT NULL
+          GROUP BY s.president_key, s.year
+          ORDER BY s.president_key, s.year
+      most_self_referential:
+        title: Most "I"-heavy speeches (first-person singular)
+        sql: |-
+          SELECT s.date, s.president_key, s.title,
+                 f.first_person_singular_ratio AS i_ratio, f.i_to_we_ratio
+          FROM speeches s
+          JOIN linguistic_features f ON f.speech_id = s.id
+          ORDER BY f.first_person_singular_ratio DESC
+          LIMIT 100

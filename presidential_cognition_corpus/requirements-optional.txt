@@ -20,6 +20,23 @@ sentence-transformers>=2.7
 # Local LLM client — points at your LM Studio OpenAI-compatible endpoint.
 openai>=1.30
 
+# Statistics for the Berisha replication / validation (replicate_berisha.py).
+scipy>=1.11
+
+# Postgres store + web GUIs that query it DIRECTLY (no mirror).
+#   load_to_postgres.py  -> Postgres system of record
+#   dashboard.py         -> marimo reactive dashboard (serve_gui.sh)
+#   pgweb                -> install separately: `brew install pgweb`
+psycopg[binary]>=3.1
+sqlalchemy>=2.0
+marimo>=0.23
+altair>=5.0
+
+# Optional legacy: Datasette browser over a SQLite mirror (build_browser.sh).
+datasette>=0.64
+sqlite-utils>=3.36
+db-to-sqlite[postgresql]>=1.5
+
 # --- handy for analysis notebooks (uncomment as desired) ---
 # matplotlib>=3.8
 # scikit-learn>=1.4

@@ -43,6 +43,11 @@ env/
 **/data_clean/**/*.txt
 **/data_clean/**/*.csv
 **/data_clean/**/*.parquet
+# Generated Datasette SQLite mirror (rebuilt from Postgres by build_browser.sh)
+**/data_clean/**/*.db
+**/*.db-wal
+**/*.db-shm
+**/*.db-journal
 
 # --- Logs & generated reports ---
 **/logs/*.log

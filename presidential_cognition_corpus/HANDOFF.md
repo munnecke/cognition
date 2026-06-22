@@ -136,13 +136,42 @@ future Postgres `linguistic_features` table.
   NLTK `vader_lexicon`. (spaCy had no model before — `compute_metrics.py` was
   silently falling back to a blank sentencizer.)
 
-### Storage direction (discussed, not yet built)
-Plan to load the flat files into **Postgres** (already running locally; PG 18.3
-with pgvector 0.8.2 + pg_trgm available) via an idempotent `load_to_postgres.py`
-final stage — keep the files as source of truth, add a queryable DB. Tables:
-`presidents`, `speeches` (+ full_text/tsvector), `linguistic_features` (core cols
-+ JSONB for evolving metrics), `llm_extractions` (with model+prompt provenance),
-optional `speech_embeddings` (pgvector). Not yet implemented.
+### Storage + browser (BUILT 2026-06-22)
+- `scripts/load_to_postgres.py` — idempotent load of the flat files into Postgres
+  DB `presidential_speech` (PG 18.3, pgvector/pg_trgm available). Keyed on speech
+  `id`; re-runnable as the corpus grows. Tables: `presidents`, `speeches`
+  (+ full_text + tsvector FTS), `linguistic_features` (promoted numeric cols +
+  `features` JSONB), `llm_extractions` (model+prompt provenance; empty until the
+  LLM layer runs). Flat files remain the source of truth.
+- **Web GUIs query Postgres DIRECTLY — no mirror, no sync (2026-06-22).**
+  `scripts/serve_gui.sh` starts both:
+  - **marimo dashboard** (`scripts/dashboard.py`) → http://localhost:2718. The
+    primary GUI. Reactive Python app served read-only; queries Postgres live and
+    REUSES our own code (the Berisha validation panel calls `replicate_berisha`).
+    The dashboard is a `.py` file in the repo — no separate app-database to manage.
+  - **pgweb** → http://localhost:8081. Lightweight read-only table browser + SQL
+    runner, directly on Postgres.
+- Datasette path RETIRED (it required a duplicate SQLite mirror). The scripts
+  remain as an optional lightweight alternative: `scripts/build_browser.sh` +
+  `scripts/datasette_metadata.yaml` rebuild a SQLite mirror and serve it at :8001.
+  Not used by default.
+- NOTE: `speeches.type` is populated by the `classify_event_type` pipeline stage,
+  which runs after collection — so it's null mid-collection and fills in on the
+  full post-processing pass. Re-run `build_browser.sh` after the scrape completes
+  for the full ~22k-doc enriched browser.
+
+### Method validation (BUILT 2026-06-22)
+- `scripts/segment_speaker.py` — president-only spontaneous-answer segmentation
+  (drops prepared statements, questions, topic headers, [brackets]).
+- `scripts/replicate_berisha.py` — reproduces Berisha et al. 2015 as an
+  end-to-end validation. **Reagan replicates cleanly (3/3 verdicts match)**;
+  Bush control mostly matches (pending his full collection). See
+  `documents/tech_journal.md` for results + code, and `documents/nihms-1062581.pdf`
+  for the paper.
+
+### Future (discussed, not built)
+`speech_embeddings` (pgvector) for semantic drift / clustering; knowledge-graph
+entity/relation tables (spaCy NER), optionally cross-linked to the `curator` DB.
 
 ## Local LLM
 `scripts/llm.py` targets LM Studio (OpenAI-compatible, default
