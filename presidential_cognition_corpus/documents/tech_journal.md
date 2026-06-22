@@ -4,6 +4,35 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Parallelized feature extraction (measured 3.2×)
+
+### Decision
+Add `--n-process` to `extract_features.py` (spaCy `nlp.pipe(n_process=N)`) to use
+the idle cores. Single-process extraction was pinning exactly **1 of 12 cores** on
+an M4 Pro (8 performance + 4 efficiency) — the machine was mostly loafing.
+
+### Benchmark (1,000 docs, en_core_web_sm, same inputs)
+| | wall time | throughput |
+|---|---|---|
+| 1 core | 121.3 s | 8.2 docs/sec |
+| 8 workers | 38.2 s | 26.2 docs/sec |
+| **speedup** | | **3.2×** |
+
+### Why 3.2×, not 8×
+`nlp.pipe(n_process)` parallelizes only the **spaCy parse**; our `compute_features`
++ VADER run **serially in the main process** (Amdahl), plus multiprocessing /
+per-worker model-load overhead. Near-linear scaling would require sharding the
+*whole* per-doc pipeline across processes — deferred (3.2× is a solid win for a
+one-line change).
+
+### Context
+Collection is **network / rate-limit bound**, not compute — more workers don't
+help it (and would be impolite to one server). This lever is for the local-compute
+stages: feature extraction now; embeddings and the LLM affect layer later (those
+will also light up the currently-idle GPU via Apple MPS / LM Studio).
+
+---
+
 ## 2026-06-22 — Design: keep the corpus open to pre/post-presidential language
 
 ### Intent

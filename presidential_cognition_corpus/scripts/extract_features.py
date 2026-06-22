@@ -272,7 +272,7 @@ def _read_body(rel: str) -> str:
 # ---------------------------------------------------------------------------
 
 def run(only_missing: bool = False, limit: int | None = None,
-        model: str = "en_core_web_sm") -> None:
+        model: str = "en_core_web_sm", n_process: int = 1) -> None:
     import pandas as pd
 
     meta = C.load_metadata()
@@ -305,8 +305,8 @@ def run(only_missing: bool = False, limit: int | None = None,
     nlp = _get_nlp(model)
     vader = _get_vader()
     model_label = f"{model}/{getattr(nlp, 'meta', {}).get('version', '?')}" if nlp else "none"
-    LOG.info("Extracting features for %d transcripts (model=%s, vader=%s).",
-             len(todo), model_label, bool(vader))
+    LOG.info("Extracting features for %d transcripts (model=%s, vader=%s, n_process=%d).",
+             len(todo), model_label, bool(vader), n_process)
 
     bodies = [_read_body(rel) for _, rel in todo]
     ids = [sid for sid, _ in todo]
@@ -328,7 +328,8 @@ def run(only_missing: bool = False, limit: int | None = None,
     if nlp:
         # stream with spaCy; skip empty bodies and the length guard for huge docs
         pairs = [(b[:1_000_000], (sid, b)) for sid, b in zip(ids, bodies)]
-        for doc, (sid, body) in nlp.pipe(pairs, as_tuples=True, batch_size=64):
+        for doc, (sid, body) in nlp.pipe(pairs, as_tuples=True, batch_size=64,
+                                         n_process=n_process):
             try:
                 _emit(sid, body, doc if body else None)
             except Exception as e:
@@ -370,8 +371,10 @@ def main():
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--model", default="en_core_web_sm",
                     help="spaCy model (en_core_web_sm/md/trf)")
+    ap.add_argument("--n-process", type=int, default=1,
+                    help="spaCy worker processes for nlp.pipe (parallel parsing)")
     args = ap.parse_args()
-    run(args.only_missing, args.limit, args.model)
+    run(args.only_missing, args.limit, args.model, args.n_process)
 
 
 if __name__ == "__main__":
