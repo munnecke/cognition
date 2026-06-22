@@ -4,6 +4,43 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Design: keep the corpus open to pre/post-presidential language
+
+### Intent
+Keep the architecture able to later incorporate language from *outside* the
+official presidential term — pre-presidential (campaign, earlier-career interviews,
+social media in the run-up) and post-/between-presidency — without reworking the
+core. **Not building it now**; recording the design seams so it stays open.
+
+### Why it fits naturally
+The right unit for cognitive-trajectory work is the **person across time**, with the
+presidency as one labeled *phase*; a longer time series is strictly better for
+detecting longitudinal change. Affordances already present:
+- Documents keyed by person + **date** (the longitudinal axis is phase-agnostic).
+- `campaign_or_official` and `source` metadata fields already exist.
+- Trump is already collected from the **2015 campaign** (model handles pre-office
+  material), and his terms split by date — a special case of phase labeling.
+- Drop-folder ingest already accepts non-archive sources (interviews, rally,
+  YouTube) — the natural path for social media / podcast transcripts.
+
+### Extension seams (to implement when real pre/post data arrives — not now)
+- **Separate "term boundaries" from "collection window."** Today `collect_from/to`
+  serve both; to harvest pre/post material we'd widen collection while keeping the
+  official term for labeling → add explicit `term_start`/`term_end`.
+- **Generalize `life_phase(person, date)`** = pre / campaign / term-N / between /
+  post. The current Trump date-split is its first instance.
+- **Social media is a distinct register** (short, high-volume, different norms) —
+  its own `source`, carrying the existing `quality_score`/`machine_generated` flags,
+  analyzed with register-aware care.
+
+### Decision
+Document the seams; **don't pre-abstract** (premature abstraction is its own
+anti-pattern). Current work (neutral IDs, affect features, Postgres schema keyed by
+person+date+source) is already phase-agnostic and won't preclude the extension; the
+phase model gets built when the first out-of-term data is actually added.
+
+---
+
 ## 2026-06-22 — Neutral president identifiers (de-biasing device)
 
 ### Decision
