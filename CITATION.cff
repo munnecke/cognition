@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: >-
+  If you use this work, please cite it — and consider registering your work in
+  LINEAGE.md as a descendant so the idea's genealogy stays connected.
+title: "Presidential Cognition Corpus"
+abstract: >-
+  An open, validated pipeline for longitudinal linguistic and cognitive-linguistic
+  analysis of U.S. presidential spoken language (Reagan to present), including an
+  independent replication of Berisha et al. (2015).
+type: software
+authors:
+  # TODO: set your name as you want it cited.
+  - family-names: "Munnecke"
+    given-names: ""
+    email: "munnecke@gmail.com"
+repository-code: "https://github.com/munnecke/cognition"
+url: "https://github.com/munnecke/cognition"
+keywords:
+  - computational linguistics
+  - longitudinal language analysis
+  - cognitive-linguistic markers
+  - presidential speech
+  - open science
+# license: "MIT"        # uncomment with your chosen SPDX id once you add a LICENSE file
+date-released: "2026-06-22"
+# version: "v0.1.0"      # set when you cut a tagged release
+# doi: "10.5281/zenodo.XXXXXXX"   # add after minting a Zenodo DOI from a release
