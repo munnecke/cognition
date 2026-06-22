@@ -92,7 +92,9 @@ def main():
     _safe("classify_event_type", classify_event_type.run, args.llm, False, None)
 
     import compute_metrics
-    _safe("compute_metrics", compute_metrics.run, False, None)
+    import os as _os
+    _safe("compute_metrics", compute_metrics.run, False, None,
+          max(1, (_os.cpu_count() or 4) - 2))   # parallel sentence-splitting
 
     if args.features:
         import extract_features

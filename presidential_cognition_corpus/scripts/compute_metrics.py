@@ -104,11 +104,12 @@ def _read_body(rel: str) -> str:
                      if not l.startswith("#")).strip()
 
 
-def compute(body: str) -> dict:
+def compute(body: str, sentences: list[str] | None = None) -> dict:
     words = _WORD.findall(body)
     wc = len(words)
     paragraphs = [p for p in re.split(r"\n\s*\n", body) if p.strip()]
-    sentences = split_sentences(body)
+    if sentences is None:
+        sentences = split_sentences(body)
     sent_lens = [len(_WORD.findall(s)) for s in sentences if _WORD.findall(s)]
 
     ttr = (len({w.lower() for w in words}) / wc) if wc else 0.0
@@ -143,26 +144,44 @@ def compute(body: str) -> dict:
     }
 
 
-def run(only_missing: bool, limit: int | None) -> None:
+def run(only_missing: bool, limit: int | None, n_process: int = 1) -> None:
     df = C.load_metadata()
     if df.empty:
         LOG.warning("No metadata; nothing to measure.")
         return
-    n = 0
+
+    todo = []  # (idx, body)
     for idx, row in df.iterrows():
-        if limit and n >= limit:
+        if limit and len(todo) >= limit:
             break
         if only_missing and (row.get("sentence_count") or "").strip():
             continue
         body = _read_body(row.get("clean_file_path", ""))
-        if not body:
-            continue
-        metrics = compute(body)
-        for k, v in metrics.items():
-            df.at[idx, k] = v
-        n += 1
-        if n % 200 == 0:
-            LOG.info("...%d processed", n)
+        if body:
+            todo.append((idx, body))
+    if not todo:
+        LOG.info("Nothing to compute.")
+        return
+
+    nlp = _get_nlp()
+    LOG.info("Computing metrics for %d transcripts (n_process=%d).", len(todo), n_process)
+    n = 0
+    if nlp:
+        # parallelize the spaCy sentence-splitting; compute the rest per doc.
+        pairs = [(b[:1_000_000], (idx, b)) for idx, b in todo]
+        for doc, (idx, body) in nlp.pipe(pairs, as_tuples=True, batch_size=64, n_process=n_process):
+            sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+            for k, v in compute(body, sents).items():
+                df.at[idx, k] = v
+            n += 1
+            if n % 1000 == 0:
+                C.save_metadata(df)          # periodic save -> crash-safe + resumable
+                LOG.info("...%d processed (saved)", n)
+    else:                                    # regex-only fallback
+        for idx, body in todo:
+            for k, v in compute(body).items():
+                df.at[idx, k] = v
+            n += 1
     C.save_metadata(df)
     LOG.info("Computed metrics for %d transcripts.", n)
 
@@ -171,8 +190,10 @@ def main():
     ap = argparse.ArgumentParser(description="Compute corpus metrics (Milestone 3).")
     ap.add_argument("--only-missing", action="store_true")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--n-process", type=int, default=1,
+                    help="spaCy worker processes for sentence splitting (parallel)")
     args = ap.parse_args()
-    run(args.only_missing, args.limit)
+    run(args.only_missing, args.limit, args.n_process)
 
 
 if __name__ == "__main__":

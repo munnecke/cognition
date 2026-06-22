@@ -11,6 +11,11 @@ Captured so they aren't lost. Nothing here is urgent; pull from it when relevant
   `compute_features` + VADER in the main process. Shard the *whole* per-doc pipeline
   across processes for closer to ~8×. *Only if feature passes become a bottleneck —
   3.2× is fine for now.* *(Deferred 2026-06-22.)*
+- [ ] **Merge `compute_metrics` into `extract_features`** — they each run a full
+  spaCy pass over the corpus (redundant). Fold the descriptive metrics (sentence
+  stats, readability, Q&A) into the single parallelized feature pass so the corpus
+  is parsed once, not twice. *(Deferred 2026-06-22; both are now parallelized + the
+  metrics stage is crash-safe with periodic saves, so it's not urgent.)*
 
 ## Analysis / data (already designed for; see tech_journal.md)
 - [ ] **Pre/post/between-presidential language** — campaign, earlier interviews,
