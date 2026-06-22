@@ -21,7 +21,7 @@ keywords:
   - cognitive-linguistic markers
   - presidential speech
   - open science
-# license: "MIT"        # uncomment with your chosen SPDX id once you add a LICENSE file
+license: "MIT"          # applies to the SOFTWARE in this repo; see README for source-data terms
 date-released: "2026-06-22"
 # version: "v0.1.0"      # set when you cut a tagged release
 # doi: "10.5281/zenodo.XXXXXXX"   # add after minting a Zenodo DOI from a release
