@@ -4,6 +4,39 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Exploratory latent-factor analysis (preliminary)
+
+*Reframed "deep structure" → modern latent-variable modeling: are there underlying
+factors organizing the surface markers? Factor analysis (varimax) on 18 markers,
+18,482 speeches, 5 presidents. `scripts/latent_factors.py`.*
+
+### Findings
+~60% of variance in 4 factors (first two dominate, 27% + 18%). Interpretable axes:
+- **F1 Syntactic complexity** (clauses/sentence, subordination, tree depth, dep. distance)
+- **F2 Verbal ↔ nominal** (verb-heavy vs noun/adjective-heavy)
+- **F3 Lexical diversity** (MTLD, MATTR)
+- **F4 Noun density / concreteness** (noun-heavy, low function words/hedges)
+
+Per-president factor scores (coded) **recover the earlier descriptive differences** —
+a consistency check that the factors are real: K (Reagan) top diversity; H (G.W. Bush)
+simplest syntax + most nominal; N/P (Clinton/Obama) most complex.
+
+The **within-person** factor structure mirrors the pooled one → the loud axes are
+style + genre, operating both between and within presidents (a formal address vs a
+Q&A varies the same way presidents differ from each other).
+
+### What it does / doesn't answer
+It confirms there *are* interpretable underlying factors (dominated by syntactic
+complexity + lexical diversity). It does **not** yet test "a factor driving *change*
+over time" (the dementia hypothesis) — this is the *static* factor structure, not its
+trajectory. **Next step:** project each president's speeches onto the factors and
+regress factor scores against time *within-person* (a latent-construct trajectory —
+the Berisha time-trend logic applied to a multi-indicator construct). `idea_density`
+(arriving in the full pass) should strengthen a "cognitive-linguistic integrity"
+factor (diversity + idea density − non-specific nouns).
+
+---
+
 ## 2026-06-22 — First cross-president analyses (preliminary, 5 presidents)
 
 *Preliminary — run on the 5 complete presidencies (Reagan→Obama); Trump (S/V) and
