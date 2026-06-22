@@ -110,6 +110,53 @@ def match_president(text: str) -> Optional[President]:
 
 
 # ----------------------------------------------------------------------------
+# Neutral president identifiers (Russell-inspired de-biasing device)
+# ----------------------------------------------------------------------------
+# Neutral symbolic labels used BY DEFAULT in comparative / affect outputs so that
+# readers examine the linguistic pattern before importing political or emotional
+# associations with a name. This is NOT anonymization — dates and analyses make
+# identities obvious — it is a presentation-order device ("coded first, revealed
+# second"), analogous to a blinded analysis. See documents/neutral_identifiers.md.
+#
+# Letters avoid culturally loaded ones (A/F grades, X unknown, Z sleepy, Q
+# political; plus T and R for Trump / Reagan-Republican, and W/G for the Bushes)
+# and are assigned arbitrarily and fixed. Trump's two non-consecutive terms are
+# treated as SEPARATE presidencies (the gap may itself carry a longitudinal
+# signal), split by date.
+
+TRUMP_2ND_TERM_START = "2021-01-20"   # trump docs on/after this date -> 2nd-term id
+
+PRESIDENT_CODE: dict[str, str] = {
+    "reagan":  "K",
+    "bush41":  "M",
+    "clinton": "N",
+    "bush43":  "H",
+    "obama":   "P",
+    "biden":   "L",
+    # "trump" is split by term in neutral_code(): 1st-term -> S, 2nd-term -> V
+}
+TRUMP_CODES = ("S", "V")   # (1st term, 2nd term)
+
+# Reverse map for the reveal / legend (code -> human label).
+CODE_TO_PRESIDENT: dict[str, str] = {
+    "K": "Reagan", "M": "G.H.W. Bush", "N": "Clinton", "H": "G.W. Bush",
+    "P": "Obama", "L": "Biden", "S": "Trump (1st term)", "V": "Trump (2nd term)",
+}
+
+
+def neutral_code(president_key: str, date_iso: str = "") -> str:
+    """Neutral identifier letter for a (president, date). Trump splits by term."""
+    if president_key == "trump":
+        return TRUMP_CODES[1] if (date_iso and date_iso >= TRUMP_2ND_TERM_START) else TRUMP_CODES[0]
+    return PRESIDENT_CODE.get(president_key, "?")
+
+
+def neutral_label(president_key: str, date_iso: str = "") -> str:
+    """e.g. 'President K' — use in coded-first comparative / affect displays."""
+    return f"President {neutral_code(president_key, date_iso)}"
+
+
+# ----------------------------------------------------------------------------
 # Metadata schema
 # ----------------------------------------------------------------------------
 # Single source of truth for column order. Collectors fill what they can; later
