@@ -1,0 +1,53 @@
+# ===========================================================================
+# Presidential Cognition Corpus — repository ignore rules
+# Archives SOFTWARE only. All collected/generated DATA stays local for now.
+# Directory structure is preserved via .gitkeep files (see bottom).
+# ===========================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- OS / editor cruft ---
+.DS_Store
+.idea/
+.vscode/
+
+# --- Caches & per-collector state ---
+.cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Collected corpus DATA & generated tables — kept local, not archived.
+# (Patterns target files, never directories, so .gitkeep structure survives.)
+# ---------------------------------------------------------------------------
+# Raw scraped HTML and manually-ingested transcripts
+# (**/ prefix so they match the data dirs at any depth — they live one level
+#  down under presidential_cognition_corpus/, not at the repo root.)
+**/data_raw/**/*.html
+**/data_raw/**/*.htm
+**/data_raw/**/*.txt
+**/data_raw/**/*.json
+# Cleaned corpus, metadata, and feature tables
+**/data_clean/**/*.txt
+**/data_clean/**/*.csv
+**/data_clean/**/*.parquet
+
+# --- Logs & generated reports ---
+**/logs/*.log
+**/logs/*.out
+**/logs/*.md
+
+# --- Always keep empty-directory placeholders ---
+!**/.gitkeep

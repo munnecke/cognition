@@ -1,0 +1,19 @@
+# caches & state
+.cache/
+__pycache__/
+*.pyc
+.DS_Store
+
+# raw downloaded HTML can be large — keep locally, don't commit by default
+data_raw/**/*.html
+data_raw/**/*.htm
+
+# logs
+logs/*.log
+
+# environments
+.venv/
+venv/
+
+# but keep the directory structure
+!**/.gitkeep

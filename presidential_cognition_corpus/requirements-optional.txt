@@ -1,0 +1,29 @@
+# Optional / heavier packages. Installed best-effort by the setup script.
+# A failure here (e.g. no wheel yet for a brand-new Python) does NOT block the
+# collector — the pipeline falls back gracefully.
+
+# NLP feature extraction (extract_features.py): POS, dependency parse, lemmas,
+# morphology. Also used for sentence segmentation in compute_metrics.py.
+# REQUIRES a model — install once after spaCy:
+#     python -m spacy download en_core_web_sm
+spacy>=3.7
+
+# Readability (compute_metrics) + VADER rule-based sentiment (extract_features).
+# VADER needs a one-time lexicon download (auto-fetched on first use):
+#     python -c "import nltk; nltk.download('vader_lexicon')"
+textstat>=0.7
+nltk>=3.8
+
+# Embeddings for the later analysis phase (semantic drift, etc.). Pulls PyTorch.
+sentence-transformers>=2.7
+
+# Local LLM client — points at your LM Studio OpenAI-compatible endpoint.
+openai>=1.30
+
+# --- handy for analysis notebooks (uncomment as desired) ---
+# matplotlib>=3.8
+# scikit-learn>=1.4
+# plotly>=5.20
+# duckdb>=0.10
+# polars>=0.20
+# networkx>=3.2

@@ -1,0 +1,31 @@
+# Core dependencies — everything needed to COLLECT, CLEAN, DEDUPE, and MEASURE
+# the corpus. These have wheels on all supported Python versions.
+#
+# The heavier/optional ML packages (spaCy, sentence-transformers) and the local
+# LLM client live in requirements-optional.txt and are installed best-effort by
+# the setup script, so a missing wheel on a brand-new Python can never block the
+# collector. The pipeline degrades gracefully if they are absent:
+#   * no spaCy  -> regex sentence splitter is used instead
+#   * no textstat data -> Flesch columns left blank, all else computed
+#   * no sentence-transformers -> only matters in the later analysis phase
+
+# --- collection & parsing ---
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+trafilatura>=1.8
+python-dateutil>=2.9
+tqdm>=4.66
+
+# --- data handling ---
+pandas>=2.2
+pyarrow>=15.0
+
+# --- deduplication ---
+rapidfuzz>=3.6
+datasketch>=1.6
+
+# --- readability metrics (light) ---
+textstat>=0.7
+nltk>=3.8
+cmudict>=1.0
