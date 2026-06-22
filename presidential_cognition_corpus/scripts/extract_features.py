@@ -333,8 +333,12 @@ def run(only_missing: bool = False, limit: int | None = None,
     n = 0
     if nlp:
         # stream with spaCy; skip empty bodies and the length guard for huge docs
-        pairs = [(b[:1_000_000], (sid, b)) for sid, b in zip(ids, bodies)]
-        for doc, (sid, body) in nlp.pipe(pairs, as_tuples=True, batch_size=64,
+        # Memory guard: a small batch_size bounds how many Docs a worker buffers at
+        # once (a cluster of very long transcripts × batch_size=64 ballooned workers
+        # to 7-10 GB each → OOM panic). The per-doc char cap bounds the worst outliers
+        # (e.g. multi-hour Trump briefings/interviews ~200K chars).
+        pairs = [(b[:300_000], (sid, b)) for sid, b in zip(ids, bodies)]
+        for doc, (sid, body) in nlp.pipe(pairs, as_tuples=True, batch_size=16,
                                          n_process=n_process):
             try:
                 _emit(sid, body, doc if body else None)

@@ -168,8 +168,10 @@ def run(only_missing: bool, limit: int | None, n_process: int = 1) -> None:
     n = 0
     if nlp:
         # parallelize the spaCy sentence-splitting; compute the rest per doc.
-        pairs = [(b[:1_000_000], (idx, b)) for idx, b in todo]
-        for doc, (idx, body) in nlp.pipe(pairs, as_tuples=True, batch_size=64, n_process=n_process):
+        # Small batch_size + per-doc cap bound worker memory (see extract_features:
+        # long-transcript clusters × large batches caused an OOM kernel panic).
+        pairs = [(b[:300_000], (idx, b)) for idx, b in todo]
+        for doc, (idx, body) in nlp.pipe(pairs, as_tuples=True, batch_size=16, n_process=n_process):
             sents = [s.text.strip() for s in doc.sents if s.text.strip()]
             for k, v in compute(body, sents).items():
                 df.at[idx, k] = v
