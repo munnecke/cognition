@@ -4,6 +4,86 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Neutral president identifiers (de-biasing device)
+
+### Decision
+Comparative and affect outputs will default to **neutral symbolic labels**
+("President K", "President M", …) rather than names, revealing identity only after
+the pattern has been examined ("coded first, revealed second").
+
+### Reasoning
+Public figures carry strong political/emotional associations; naming them invites
+readers (and us) to import priors into the interpretation of linguistic results.
+Following an idea associated with **Bertrand Russell** (reformulating charged
+questions with abstract placeholders to expose structure before ideology), neutral
+identifiers act like a **blinded analysis** for exploratory/comparative work —
+most valuable for affect variables (anger, Me/Us focus, sentiment) where priming
+is worst.
+
+It is explicitly **not anonymization**: dates and specific analyses make identities
+obvious, and we deliberately name names where the science requires it (the Berisha
+replication; Reagan's diagnosis). It's a presentation-order device, not concealment.
+
+### Choices made (and why)
+- **Letters** avoid culturally loaded ones — A/F (grades), X (unknown), Z
+  (sleepy), Q (contemporary political) — and we additionally dropped **T** (a Trump
+  monogram) and **R** (Reagan / "Republican" ballot letter) after recognizing they
+  carry exactly the associations we're trying to neutralize. Also avoided W/G (the
+  Bushes). Final set: H, K, L, M, N, P, S, V.
+- **Assignment** is arbitrary and fixed, chosen so no letter matches its
+  president's initial (so the letter itself doesn't leak the name).
+- **Trump's two non-consecutive terms are split** into separate presidencies
+  (President S = 1st, V = 2nd), because the four-year gap may itself reveal a
+  longitudinal change in linguistic capability — a within-person comparison worth
+  preserving. Implemented as a date split (2021-01-20) at the presentation layer;
+  collection still uses one `trump` key, so nothing in the scraper changed.
+
+Implemented in `scripts/common.py` (`neutral_code`, `neutral_label`,
+`CODE_TO_PRESIDENT`); rationale + table in `documents/neutral_identifiers.md`.
+
+---
+
+## 2026-06-22 — Open science: license, citation, and idea lineage
+
+### What and why
+To make "completely open, validate or extend as you see fit" real and citable:
+- **MIT license** on the software (`LICENSE`). The collected transcripts are *not*
+  redistributed — the underlying official remarks are largely US public domain
+  (17 USC §105), but source transcriptions/databases (APP, Miller) carry their own
+  terms, so we ship the *method* and keep data local (`README` documents this).
+- **`CITATION.cff`** for a permanent "Cite this repository" entry (affiliation:
+  Cosmos Research Center); a Zenodo DOI from a tagged release is the planned
+  permanent identifier.
+- **`LINEAGE.md`** — an Engelbart-inspired *evolutionary attribution* structure:
+  explicit **ancestors** (Berisha 2015, the Nun Study, Le et al., Bird et al.,
+  Gottschalk, Pennebaker, Engelbart) and open **descendants**, extendable by PR.
+  The project is self-exemplifying — it demonstrates the attribution method on its
+  own development. Intended eventually as a Cosmos Research Center case study.
+
+The validation was also packaged for sharing: `documents/berisha_validation.md`
+(+ `.png` figure via `scripts/validation_figure.py`, + PDF), and a paste-ready
+overview in `documents/project_brief.md`.
+
+---
+
+## 2026-06-22 — Storage + web GUIs (Postgres, no duplication)
+
+### What and why
+The flat-file corpus is the durable source of truth, but relational storage suits
+the 1:1 features / 1:many LLM-extractions / cross-president longitudinal queries.
+- **`scripts/load_to_postgres.py`** — idempotent load into Postgres
+  (`presidents`, `speeches` + full_text + tsvector FTS, `linguistic_features`,
+  `llm_extractions`). Keyed on the deterministic speech id; re-runnable as the
+  corpus grows. Files stay the source of truth; the scraper isn't coupled to the DB.
+- **GUIs query Postgres directly** (`scripts/serve_gui.sh`): a **marimo** dashboard
+  (`scripts/dashboard.py`) that reuses our own code (it calls `replicate_berisha`
+  live), and **pgweb** for raw browsing. Chosen over Metabase/Datasette because the
+  user flagged the duplicate-database / sync problem of a SQLite mirror — marimo is
+  a `.py` file in the repo querying Postgres live, so there's no second store to
+  manage. The earlier Datasette/SQLite-mirror path was retired.
+
+---
+
 ## 2026-06-22 — Method validation: replicating Berisha et al. (2015)
 
 ### Goal
