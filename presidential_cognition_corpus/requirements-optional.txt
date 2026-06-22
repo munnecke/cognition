@@ -20,10 +20,13 @@ sentence-transformers>=2.7
 # Local LLM client — points at your LM Studio OpenAI-compatible endpoint.
 openai>=1.30
 
-# Statistics + figure for the Berisha replication / validation
-# (replicate_berisha.py, validation_figure.py).
+# Statistics + figures + modeling for the analyses (replicate_berisha.py,
+# validation_figure.py, cohort_figures.py, compare_features.py, latent_factors.py,
+# latent_trajectory.py) and the exploration notebook.
 scipy>=1.11
 matplotlib>=3.7
+scikit-learn>=1.3
+jupyterlab>=4.0      # notebooks/explore_corpus.ipynb
 
 # Postgres store + web GUIs that query it DIRECTLY (no mirror).
 #   load_to_postgres.py  -> Postgres system of record
