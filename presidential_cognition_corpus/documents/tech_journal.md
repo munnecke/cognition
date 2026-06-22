@@ -4,6 +4,44 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Latent integrity trajectory (the Berisha upgrade)
+
+Built a multi-indicator **cognitive-linguistic integrity** composite
+( z(unique_words) + z(idea_density) − z(NS-nouns+fillers) ) and regressed it
+*within each president over time*, in the validated news-conference frame.
+`scripts/latent_trajectory.py`.
+
+### Result (coded-first; n=5 presidents)
+| | integrity slope | verdict |
+|---|---|---|
+| **President K (Reagan)** | **R=−0.480, p=0.001** | **significant decline** |
+| President M (G.H.W. Bush) | −0.162, p=0.11 | null |
+| President N (Clinton) | −0.146, p=0.20 | null |
+| President H (G.W. Bush) | +0.210, p=0.14 | null |
+| President P (Obama) | +0.132, p=0.31 | null |
+
+Reagan's integrity composite declines significantly and **uniquely** — and *more
+cleanly than any single marker* (composite p=0.001 vs. unique-words p=0.006).
+Combining indicators sharpens the signal, exactly as the multi-indicator logic
+predicts. Survives Bonferroni (0.05/5 = 0.01).
+
+### Honest caveats
+- **`idea_density` did NOT contribute** to Reagan's decline (R=+0.27, n.s. — slightly
+  *opposed* it). The composite's power comes from the two validated Berisha markers
+  (unique-words ↓, NS+fillers ↑). Not every indicator co-moves; the composite is
+  robust because 2 of 3 align strongly.
+- **Circularity:** the composite reuses the Berisha markers, so this is a robustness /
+  construct generalization, **not independent new evidence** — it shows the signal
+  holds as a latent construct, not that we've found a new one.
+- Exploratory, not diagnostic; news-conferences only; 5 presidents.
+
+### Next
+The full pass adds `idea_density` corpus-wide, syntactic-complexity indicators,
+and Trump (S/V) + Biden (L) — enabling a richer, less circular composite and the
+complete cohort.
+
+---
+
 ## 2026-06-22 — Exploratory latent-factor analysis (preliminary)
 
 *Reframed "deep structure" → modern latent-variable modeling: are there underlying
