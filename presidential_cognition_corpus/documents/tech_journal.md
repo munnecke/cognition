@@ -4,6 +4,32 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — First cross-president analyses (preliminary, 5 presidents)
+
+*Preliminary — run on the 5 complete presidencies (Reagan→Obama); Trump (S/V) and
+Biden (L) still collecting, and `idea_density` not yet in the corpus. All
+coded-first via the neutral identifiers.*
+
+### Cohort longitudinal trends (`scripts/cohort_figures.py`)
+Extended the validated Berisha method (unique words / NS-nouns+fillers over
+chronological news-conference answers) across the cohort. **Only President K
+(Reagan) shows the full decline signature** — unique words ↓ (R=−0.41) *and*
+NS+fillers ↑ (R=+0.42), both significant; every control is null. The method
+*discriminates* (one of five pops) rather than flagging everyone — the reassuring
+outcome. Caveat: exploratory, not diagnostic; small multiple-comparison budget.
+
+### Cross-president style/affect comparison (`scripts/compare_features.py`)
+Coded-first means across all spoken genres. **Me/Us focus is the big
+differentiator**: President M most "I"-leaning (1.13), President P most "we"-leaning
+(0.59). President K highest lexical diversity; President H lowest + simplest syntax.
+The patterns match recognizable styles (P = collective rhetoric, H = plain-spoken) —
+a validity check that the features capture something real. Caveats: genre-mixed
+(not controlled), levels not trends.
+
+(Reveal: K=Reagan, M=G.H.W. Bush, N=Clinton, H=G.W. Bush, P=Obama.)
+
+---
+
 ## 2026-06-22 — Parallelized feature extraction (measured 3.2×)
 
 ### Decision
