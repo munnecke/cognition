@@ -32,6 +32,7 @@ import numpy as np
 import pandas as pd
 import spacy
 from scipy import stats
+from statsmodels.nonparametric.smoothers_lowess import lowess
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -49,7 +50,7 @@ PRESIDENCIES = [
     ("bush43",  "George W. Bush",          "GW Bush",    None,         None,         "2001-01-20"),
     ("obama",   "Barack Obama",            "Obama",      None,         None,         "2009-01-20"),
     ("trump",   "Donald Trump (1st term)", "Trump '17",  None,         "2021-01-20", "2017-01-20"),
-    ("trump",   "Donald Trump (2nd term)", "Trump '25",  "2021-01-20", None,         "2025-01-20"),
+    ("trump",   "Donald Trump (2nd term)", "Trump '25",  "2021-01-20", None,         "2017-01-20"),
     ("biden",   "Joseph R. Biden",         "Biden",      None,         None,         "2021-01-20"),
 ]
 PROP = {"VERB", "ADJ", "ADV", "ADP", "CCONJ", "SCONJ"}
@@ -118,20 +119,22 @@ def main():
         m, b = np.polyfit(xk, yk, 1)
         sig = "*" if p < 0.05 else ""
         print(f"{name:26} {len(s):>3}   {m:>+8.3f}   {r:>+6.2f} {p:>7.3f}{sig}")
-        x0, x1 = xk.min(), xk.max(); xmax = max(xmax, x1)
-        ax.plot([x0, x1], [m * x0 + b, m * x1 + b], lw=2.4, color=colors[i % 10],
+        # LOWESS-smoothed curve over the actual points (gentle frac; near-linear at small n)
+        order = np.argsort(xk)
+        sm = lowess(yk[order], xk[order], frac=0.7, return_sorted=True)
+        ax.plot(sm[:, 0], sm[:, 1], lw=2.4, color=colors[i % 10],
                 label=f"{name} ({r:+.2f}{sig})")
-        ax.text(x1 + 0.05, m * x1 + b, f"{short}{sig}", fontsize=8.5, va="center",
+        ax.text(sm[-1, 0] + 0.1, sm[-1, 1], f"{short}{sig}", fontsize=8.5, va="center",
                 color=colors[i % 10], fontweight="bold")
-    ax.set_xlim(-0.2, xmax + 1.6)
-    ax.set_xlabel("years into the administration")
+    ax.set_xlim(-0.3, 10.6)
+    ax.set_xlabel("years into the administration  (Trump measured from 2017, so his 2nd term sits at 8–10)")
     ax.set_ylabel("discourse complexity index (composite z)")
     ax.set_title("Discourse complexity over each administration — news-conference answers\n"
-                 "slope = change per year; * significant at p<0.05")
+                 "LOWESS-smoothed; R / * = overall linear trend (p<0.05)")
     ax.grid(True, alpha=0.3)
-    ax.legend(loc="lower left", fontsize=8)
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8, frameon=False)
     fig.tight_layout()
-    fig.savefig("documents/discourse_complexity_trajectory.png", dpi=150)
+    fig.savefig("documents/discourse_complexity_trajectory.png", dpi=150, bbox_inches="tight")
     print("\nwrote documents/discourse_complexity_trajectory.png")
 
 

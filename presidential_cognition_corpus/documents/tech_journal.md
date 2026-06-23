@@ -28,7 +28,10 @@ Trump-2nd/Biden; news-conferences only; exploratory, not diagnostic.
 Berisha's "Tracking Discourse Complexity," less loaded than "integrity"); x-axis is
 now **years into the administration** so the slope is a real per-year rate, comparable
 across 4-/8-year terms; lines labelled directly for print. Conclusion unchanged —
-only Reagan significant (−0.088/yr, R=−0.45, p=0.003). Figure:
+only Reagan significant (−0.088/yr, R=−0.45, p=0.003). Final styling: **LOWESS-smoothed
+curves** (gentle frac, near-linear at small n so they don't overfit), legend moved off
+the plot, and Trump anchored to his **2017 inauguration** so both terms share one
+timeline (1st at yrs 0–4, 2nd at 8–10) with the out-of-office gap visible. Figure:
 `documents/discourse_complexity_trajectory.png`.*
 
 ---

@@ -26,6 +26,7 @@ openai>=1.30
 scipy>=1.11
 matplotlib>=3.7
 scikit-learn>=1.3
+statsmodels>=0.14    # LOWESS smoothing (latent_trajectory.py)
 jupyterlab>=4.0      # notebooks/explore_corpus.ipynb
 
 # Postgres store + web GUIs that query it DIRECTLY (no mirror).

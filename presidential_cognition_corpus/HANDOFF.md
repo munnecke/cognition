@@ -1,5 +1,43 @@
 # Handoff notes (for Claude Code or any local dev)
 
+## ⮕ Where we are now (2026-06-22) — read `documents/tech_journal.md` (newest-first) for the full story
+
+**Corpus: COMPLETE.** 24,701 transcripts, all 8 presidencies (Trump split into 1st/2nd
+term by date, + Biden), in flat files *and* Postgres (`presidential_speech`), with the
+full deterministic feature set including `idea_density`.
+
+**Analyses done & validated** (all in the tech journal):
+- Berisha et al. (2015) replication — 6/6 verdicts reproduced. The credibility anchor.
+- Cohort charts + **discourse complexity trajectory** (multi-indicator composite,
+  years-into-administration x-axis, LOWESS-smoothed): **only Reagan declines
+  significantly**; the single-marker blips (Biden NS+fillers, Trump term-to-term
+  diversity) **fail the coherence test** on small samples. The latent composite is
+  the honest instrument.
+- Cross-president style comparison + exploratory factor analysis.
+
+**Tooling up:** marimo dashboard (:2718), pgweb (:8081), Jupyter
+(`notebooks/explore_corpus.ipynb`), SQL recipes (`documents/sql_recipes.md`).
+**LM Studio is reachable** via `scripts/llm.py` — chat models (`gemma-4-26b`,
+`qwen2-7b`, `llama-3.2-3b`) and embedding models (`bge-m3`, `nomic`).
+
+**Active next thread (where the conversation left off):**
+1. **Trump small-n fix.** Trump's 2nd term has only ~10 news conferences. Plan: build
+   `scripts/llm_spontaneity.py` (uses `llm.py` + a fast model like `llama-3.2-3b`) to
+   *score each transcript's spontaneity*, then define the "impromptu" set from that
+   (smarter than the title="news conference" filter) — pulls in exchanges-with-
+   reporters, Q&A, interviews already in the corpus → bigger, fairer impromptu sample.
+   Verified llama-3.2-3b correctly tags spontaneous speech.
+2. **LLM affect layer** (anger / evasiveness / emotion via `gemma-26b` → the
+   `llm_extractions` table, with model+prompt provenance).
+3. **Embeddings / semantic-drift** layer (`bge-m3` → pgvector).
+4. Also queued: cross-president comparison of the *other* attributes (Me/Us, sentiment,
+   hedging, syntactic complexity) — table not yet run.
+
+**Caution:** an OOM kernel panic happened earlier (spaCy workers × long Trump
+transcripts). Fixed via `batch_size=16` + a per-doc char cap. LLM batch jobs are
+memory/time heavy — **start small, measure, scale carefully** (offloading to the M4
+over Thunderbolt was discussed as the eventual answer).
+
 ## What this is
 A local research corpus of U.S. presidential speech transcripts (Reagan →
 present) for later longitudinal linguistic/cognitive analysis. See `README.md`
