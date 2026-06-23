@@ -24,6 +24,13 @@ the Trump lines sit *low* (level — driven by register-confounded lexical diver
 which is not the same as a downward *slope*. Caveats unchanged: small n for
 Trump-2nd/Biden; news-conferences only; exploratory, not diagnostic.
 
+*Refinement (same day): renamed the composite **discourse complexity index** (after
+Berisha's "Tracking Discourse Complexity," less loaded than "integrity"); x-axis is
+now **years into the administration** so the slope is a real per-year rate, comparable
+across 4-/8-year terms; lines labelled directly for print. Conclusion unchanged —
+only Reagan significant (−0.088/yr, R=−0.45, p=0.003). Figure:
+`documents/discourse_complexity_trajectory.png`.*
+
 ---
 
 ## 2026-06-22 — Berisha charts extended to all 8 presidencies

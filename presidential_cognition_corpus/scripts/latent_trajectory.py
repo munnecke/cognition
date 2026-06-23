@@ -1,24 +1,24 @@
 """
-latent_trajectory.py — within-person trajectory of a latent "cognitive-linguistic
-integrity" construct, in the validated Berisha news-conference frame.
+latent_trajectory.py — within-person trajectory of a composite DISCOURSE COMPLEXITY
+index, in the validated Berisha news-conference frame.
 
 The multi-indicator upgrade of the Berisha replication. Instead of tracking one
 marker, we build a composite from several decline-relevant indicators and ask
 whether it drifts within a president over time:
 
   indicators (per news conference, president's first-1400-word spontaneous answers):
-    unique_words   (Lancaster-stemmed)              higher = more intact
-    idea_density   (CPIDR-style propositions/word)  higher = more intact
-    ns_plus_fillers (non-specific nouns + fillers)  higher = LESS intact (negated)
+    unique_words   (Lancaster-stemmed)              higher = more complex/intact
+    idea_density   (CPIDR-style propositions/word)  higher = more complex/intact
+    ns_plus_fillers (non-specific nouns + fillers)  higher = LESS complex (negated)
 
-  integrity = mean( z(unique), z(idea), -z(ns_plus_fillers) )   higher = more intact
+  complexity = mean( z(unique), z(idea), -z(ns_plus_fillers) )
 
 Each indicator is z-scored across the pooled cohort, sign-aligned, averaged. Then,
-within each presidency, integrity is regressed against chronological index (with the
-same >2 SD outlier drop as Berisha). A significant DECLINE in a known-AD case
-(Reagan) and flat/incoherent everywhere else is the latent-construct result.
+within each presidency, the index is regressed against TIME (years into the
+administration), so the slope is a real per-year rate, comparable across 4- and
+8-year terms. >2 SD outliers dropped (as in Berisha).
 
-All 8 presidencies (Trump's terms split by date). Full-name labels.
+All 8 presidencies (Trump's terms split). Full names; lines labelled for print.
 Usage: python scripts/latent_trajectory.py
 """
 
@@ -26,10 +26,12 @@ from __future__ import annotations
 
 import glob
 import re
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import spacy
+from scipy import stats
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -39,16 +41,16 @@ import replicate_berisha as R
 import segment_speaker as S
 
 KEYS = ["reagan", "bush41", "clinton", "bush43", "obama", "trump", "biden"]
-# (president key, full label, date_lo, date_hi) — lo/hi split Trump's terms
+# (key, full label, short label, date_lo, date_hi, term_start)
 PRESIDENCIES = [
-    ("reagan",  "Ronald Reagan",           None,         None),
-    ("bush41",  "George H. W. Bush",       None,         None),
-    ("clinton", "Bill Clinton",            None,         None),
-    ("bush43",  "George W. Bush",          None,         None),
-    ("obama",   "Barack Obama",            None,         None),
-    ("trump",   "Donald Trump (1st term)", None,         "2021-01-20"),
-    ("trump",   "Donald Trump (2nd term)", "2021-01-20", None),
-    ("biden",   "Joseph R. Biden",         None,         None),
+    ("reagan",  "Ronald Reagan",           "Reagan",     None,         None,         "1981-01-20"),
+    ("bush41",  "George H. W. Bush",       "GHW Bush",   None,         None,         "1989-01-20"),
+    ("clinton", "Bill Clinton",            "Clinton",    None,         None,         "1993-01-20"),
+    ("bush43",  "George W. Bush",          "GW Bush",    None,         None,         "2001-01-20"),
+    ("obama",   "Barack Obama",            "Obama",      None,         None,         "2009-01-20"),
+    ("trump",   "Donald Trump (1st term)", "Trump '17",  None,         "2021-01-20", "2017-01-20"),
+    ("trump",   "Donald Trump (2nd term)", "Trump '25",  "2021-01-20", None,         "2025-01-20"),
+    ("biden",   "Joseph R. Biden",         "Biden",      None,         None,         "2021-01-20"),
 ]
 PROP = {"VERB", "ADJ", "ADV", "ADP", "CCONJ", "SCONJ"}
 _nlp = spacy.load("en_core_web_sm", disable=["parser", "ner", "lemmatizer"])
@@ -75,57 +77,62 @@ def gather() -> pd.DataFrame:
             body = "\n".join(l for l in open(path, encoding="utf-8", errors="replace").read().split("\n")
                              if not l.startswith("#"))
             ind = indicators(S.president_answers(body))
-            if ind:
-                rows.append({"key": k, "date": m.group(1) if m else "",
+            if ind and m:
+                rows.append({"key": k, "date": m.group(1),
                              "unique": ind[0], "ns_fill": ind[1], "idea": ind[2]})
     df = pd.DataFrame(rows)
     for col in ["unique", "ns_fill", "idea"]:
         df["z_" + col] = (df[col] - df[col].mean()) / df[col].std()
-    df["integrity"] = (df["z_unique"] + df["z_idea"] - df["z_ns_fill"]) / 3
+    df["complexity"] = (df["z_unique"] + df["z_idea"] - df["z_ns_fill"]) / 3
     return df
 
 
-def subset(df: pd.DataFrame, key: str, lo, hi) -> pd.DataFrame:
-    s = df[df["key"] == key]
-    if lo is not None:
-        s = s[s["date"] >= lo]
-    if hi is not None:
-        s = s[s["date"] < hi]
-    return s.sort_values("date").reset_index(drop=True)
+def years(d_iso: str, start_iso: str) -> float:
+    return (date.fromisoformat(d_iso) - date.fromisoformat(start_iso)).days / 365.25
 
 
 def main():
     df = gather()
-    print("Latent cognitive-linguistic INTEGRITY trajectory — news conferences, full names")
-    print("(integrity = z(unique) + z(idea_density) - z(NS+fillers); higher = more intact)\n")
-    print(f"{'presidency':26} {'n':>3}   {'INTEGRITY slope':>18}   {'unique':>8} {'idea':>8} {'NS+fill':>8}")
-    print("-" * 84)
-    fig, ax = plt.subplots(figsize=(11, 6.5))
+    print("DISCOURSE COMPLEXITY index trajectory — news conferences (regressed on years)")
+    print("(complexity = z(unique) + z(idea_density) - z(NS+fillers); higher = more complex)\n")
+    print(f"{'presidency':26} {'n':>3}   {'slope/yr':>9}   {'R':>7} {'p':>7}")
+    print("-" * 62)
+    fig, ax = plt.subplots(figsize=(11.5, 6.5))
     colors = plt.cm.tab10(np.linspace(0, 1, 10))
-    for i, (key, label, lo, hi) in enumerate(PRESIDENCIES):
-        sub = subset(df, key, lo, hi)
-        if len(sub) < 3:
-            print(f"{label:26} {len(sub):>3}   (too few to fit)")
+    xmax = 0
+    for i, (key, name, short, lo, hi, start) in enumerate(PRESIDENCIES):
+        s = df[df["key"] == key]
+        if lo is not None:
+            s = s[s["date"] >= lo]
+        if hi is not None:
+            s = s[s["date"] < hi]
+        s = s.sort_values("date")
+        if len(s) < 3:
+            print(f"{name:26} {len(s):>3}   (too few)")
             continue
-        recs = sub.to_dict("records")
-        intg = R.regress(recs, "integrity")
-        u = R.regress(recs, "z_unique"); idea = R.regress(recs, "idea"); nf = R.regress(recs, "ns_fill")
-        st = lambda r: "*" if r["p"] < 0.05 else " "
-        print(f"{label:26} {len(sub):>3}   R={intg['R']:+.3f} p={intg['p']:.3f}{st(intg)}   "
-              f"{u['R']:+.2f}{st(u)}    {idea['R']:+.2f}{st(idea)}   {nf['R']:+.2f}{st(nf)}")
-        y = sub["integrity"].values
-        x = np.arange(len(y)); keep = np.abs(y - y.mean()) <= 2 * y.std()
-        xn = x[keep] / (x[keep].max() or 1)
-        m, b = np.polyfit(xn, y[keep], 1)
-        ax.plot([0, 1], [b, m + b], lw=2.4, color=colors[i % 10],
-                label=f"{label} ({intg['R']:+.2f}{st(intg).strip()})")
-    ax.set_xlabel("term progress (first → last news conference)")
-    ax.set_ylabel("cognitive-linguistic integrity (composite z)")
-    ax.set_title("Latent integrity trajectory per presidency (news conferences)\n"
-                 "* significant at p<0.05")
-    ax.grid(True, alpha=0.3); ax.legend(loc="best", fontsize=8.5)
-    fig.tight_layout(); fig.savefig("documents/latent_integrity_trajectory.png", dpi=150)
-    print("\nwrote documents/latent_integrity_trajectory.png")
+        x = np.array([years(d, start) for d in s["date"]])
+        y = s["complexity"].values
+        keep = np.abs(y - y.mean()) <= 2 * y.std()
+        xk, yk = x[keep], y[keep]
+        r, p = stats.pearsonr(xk, yk)
+        m, b = np.polyfit(xk, yk, 1)
+        sig = "*" if p < 0.05 else ""
+        print(f"{name:26} {len(s):>3}   {m:>+8.3f}   {r:>+6.2f} {p:>7.3f}{sig}")
+        x0, x1 = xk.min(), xk.max(); xmax = max(xmax, x1)
+        ax.plot([x0, x1], [m * x0 + b, m * x1 + b], lw=2.4, color=colors[i % 10],
+                label=f"{name} ({r:+.2f}{sig})")
+        ax.text(x1 + 0.05, m * x1 + b, f"{short}{sig}", fontsize=8.5, va="center",
+                color=colors[i % 10], fontweight="bold")
+    ax.set_xlim(-0.2, xmax + 1.6)
+    ax.set_xlabel("years into the administration")
+    ax.set_ylabel("discourse complexity index (composite z)")
+    ax.set_title("Discourse complexity over each administration — news-conference answers\n"
+                 "slope = change per year; * significant at p<0.05")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="lower left", fontsize=8)
+    fig.tight_layout()
+    fig.savefig("documents/discourse_complexity_trajectory.png", dpi=150)
+    print("\nwrote documents/discourse_complexity_trajectory.png")
 
 
 if __name__ == "__main__":
