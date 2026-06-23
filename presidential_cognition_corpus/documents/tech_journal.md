@@ -4,6 +4,39 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Berisha charts extended to all 8 presidencies
+
+Reproduced Berisha et al. Figure 1 (unique words; NS-nouns+fillers over chronological
+news conferences) for *every* presidency, full-name labels (Trump split S/V).
+`scripts/cohort_figures.py`; figures in `documents/cohort_*`.
+
+| presidency | n | unique words | NS+fillers |
+|---|---|---|---|
+| Ronald Reagan | 46 | **−0.41 (.006)** | **+0.42 (.004)** |
+| George H.W. Bush | 101 | −0.14 ns | +0.02 ns |
+| Bill Clinton | 82 | +0.03 ns | +0.18 ns |
+| George W. Bush | 52 | +0.16 ns | −0.11 ns |
+| Barack Obama | 62 | +0.13 ns | −0.28 (.031) |
+| Trump (1st) | 37 | +0.06 ns | +0.04 ns |
+| Trump (2nd) | 10 | −0.40 ns | −0.33 ns |
+| Joseph R. Biden | 14 | +0.47 ns | **+0.85 (<.001)** |
+
+**Only Reagan shows the full coherent signature** (both markers significant, decline
+direction) — across the whole cohort, his alone.
+
+**Biden** has the one statistically loud single result (NS+fillers R=+0.85, p<.001,
+survives Bonferroni) — **but it fails coherence**: his unique words *rise* (+0.47), the
+opposite of decline, so the two markers disagree (same failure mode as Trump S→V), on
+n=14. A noisy single marker, **not the decline signature, not a finding**. Obama's
+NS+fillers *decrease* (anti-decline). Others null.
+
+**Lesson:** a single chart can mislead (Biden in isolation looks alarming); coherence
+across markers — the latent-integrity composite — is the honest instrument. Caveats:
+small n for Trump-2nd (10) / Biden (14); 16 comparisons; news-conferences only;
+exploratory, not diagnostic.
+
+---
+
 ## 2026-06-22 — Latent integrity trajectory (the Berisha upgrade)
 
 Built a multi-indicator **cognitive-linguistic integrity** composite
