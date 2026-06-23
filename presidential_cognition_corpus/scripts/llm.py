@@ -38,7 +38,9 @@ class LocalLLM:
     def __init__(self, base_url: str = DEFAULT_BASE_URL,
                  api_key: str = DEFAULT_API_KEY,
                  model: str = DEFAULT_MODEL,
-                 temperature: float = DEFAULT_TEMP):
+                 temperature: float = DEFAULT_TEMP,
+                 timeout: Optional[float] = None,
+                 max_retries: int = 2):
         self.base_url = base_url
         self.model = model
         self.temperature = temperature
@@ -49,7 +51,11 @@ class LocalLLM:
                 "The 'openai' package is required for local LLM calls. "
                 "Install with:  pip install openai"
             ) from e
-        self._client = OpenAI(base_url=base_url, api_key=api_key)
+        # A request timeout matters for batch jobs: without it, a server
+        # restart or a hung generation blocks the whole run indefinitely
+        # (observed). Caller picks a bound; the client raises on exceeding it.
+        self._client = OpenAI(base_url=base_url, api_key=api_key,
+                              timeout=timeout, max_retries=max_retries)
 
     def chat(self, prompt: str, system: Optional[str] = None,
              max_tokens: int = 512, temperature: Optional[float] = None) -> str:
@@ -66,13 +72,15 @@ class LocalLLM:
         return (resp.choices[0].message.content or "").strip()
 
     def json_chat(self, prompt: str, system: Optional[str] = None,
-                  max_tokens: int = 512) -> dict:
+                  max_tokens: int = 512, temperature: Optional[float] = None) -> dict:
         """
         Ask for JSON and parse it. Falls back to extracting the first {...} block
-        if the model wraps the JSON in prose.
+        if the model wraps the JSON in prose. `temperature` overrides the default
+        (useful for a retry that perturbs a deterministic empty/garbled reply).
         """
         sys = (system or "") + "\nRespond with ONLY valid JSON. No prose, no code fences."
-        raw = self.chat(prompt, system=sys.strip(), max_tokens=max_tokens)
+        raw = self.chat(prompt, system=sys.strip(), max_tokens=max_tokens,
+                        temperature=temperature)
         raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         try:
             return json.loads(raw)

@@ -21,12 +21,24 @@ full deterministic feature set including `idea_density`.
 `qwen2-7b`, `llama-3.2-3b`) and embedding models (`bge-m3`, `nomic`).
 
 **Active next thread (where the conversation left off):**
-1. **Trump small-n fix.** Trump's 2nd term has only ~10 news conferences. Plan: build
-   `scripts/llm_spontaneity.py` (uses `llm.py` + a fast model like `llama-3.2-3b`) to
-   *score each transcript's spontaneity*, then define the "impromptu" set from that
-   (smarter than the title="news conference" filter) — pulls in exchanges-with-
-   reporters, Q&A, interviews already in the corpus → bigger, fairer impromptu sample.
-   Verified llama-3.2-3b correctly tags spontaneous speech.
+1. **Trump small-n fix — SCORING CORPUS-WIDE OVERNIGHT.** `scripts/llm_spontaneity.py`
+   scores each transcript's spontaneity (0..1) → `llm_extractions`
+   (extraction_type='spontaneity', prompt_version='spontaneity-v2'), defining the
+   impromptu set as `spontaneity ≥ threshold` instead of the brittle title filter.
+   **Model bake-off done (see tech journal 2026-06-23):** llama-3.2-3b can't
+   discriminate; gemma-4-26b is accurate but ~11 s/doc (sliding-window attention
+   defeats the prompt cache — diagnosed from LM Studio logs); qwen-coder over-labels;
+   gte-qwen is an embedding model. **Winner: Qwen2.5-7B-Instruct (general, MLX 4-bit)**
+   — 5/6, ~3-4 s/doc, GPU-pegged. Loaded id:
+   `josiefied-qwen2.5-7b-instruct-abliterated-v2-4-bit` (stock `Qwen2.5-7B-Instruct`
+   MLX 4-bit = reproducible equivalent). Overnight runner
+   `scripts/run_spontaneity_overnight.sh` (resilient/resumable/batched) is scoring
+   ALL 22,208 canonical docs ≥200 words across all 8 presidencies (~20 h → spans a
+   couple nights; `--only-missing` resumes; watch `logs/spontaneity_overnight.log`;
+   stop via `touch /tmp/STOP_SPONTANEITY`). The 69 old gemma/v1 rows are superseded
+   (filter downstream on model + prompt_version='spontaneity-v2').
+   **Next:** once scored, pick a threshold, confirm the impromptu set grows (Trump
+   2nd term was 22 press-confs), then re-run the Berisha/trajectory analyses on it.
 2. **LLM affect layer** (anger / evasiveness / emotion via `gemma-26b` → the
    `llm_extractions` table, with model+prompt provenance).
 3. **Embeddings / semantic-drift** layer (`bge-m3` → pgvector).
