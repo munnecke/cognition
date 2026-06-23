@@ -4,6 +4,28 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Latent integrity trajectory, all 8 presidencies
+
+Re-ran the multi-indicator integrity composite ( z(unique) + z(idea_density) −
+z(NS+fillers), within-person over time, news-conference frame) across the full
+cohort. `scripts/latent_trajectory.py` (now all 8, Trump S/V split, full names).
+
+**Only Reagan declines significantly: R=−0.44, p=0.003.** Everything else n.s.
+
+The composite **resolves the single-marker false alarms**:
+- **Biden** screamed on NS+fillers alone (R=+0.85, p<.001), but his composite is
+  **n.s. (−0.32, p=0.29)** because his vocabulary is simultaneously *rising* (+0.47)
+  — the markers disagree, so requiring coherence correctly declines to flag it.
+- **Trump (2nd)** likewise n.s. (n=10).
+
+This is the payoff of the multi-indicator construct vs. single charts: it isolates
+the one coherent case (Reagan) and rejects noisy single markers. Reading caveat:
+the Trump lines sit *low* (level — driven by register-confounded lexical diversity),
+which is not the same as a downward *slope*. Caveats unchanged: small n for
+Trump-2nd/Biden; news-conferences only; exploratory, not diagnostic.
+
+---
+
 ## 2026-06-22 — Berisha charts extended to all 8 presidencies
 
 Reproduced Berisha et al. Figure 1 (unique words; NS-nouns+fillers over chronological
