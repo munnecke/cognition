@@ -4,6 +4,29 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-24 — Concurrency dedup + the Trump small-n payoff
+
+Two `run_spontaneity_overnight.sh` instances ended up running at once (an earlier
+runner survived a `pkill`; the date-priority chain started a second). Both score
+with `--only-missing`, which is a check-then-write race: each reads "unscored,"
+both write → **9,785 duplicate rows** in `llm_extractions`, concentrated in the
+date range they overlapped (bush43 fully, clinton partially). Reagan/Bush41 (done
+before the second started) and Trump (scored once by the priority pass) were clean.
+
+Fix: killed both, deduped (kept lowest `id` per (speech_id, extraction_type,
+prompt_version, model)), added a **UNIQUE index** on that tuple, and made the
+scorer INSERT `... ON CONFLICT DO NOTHING`. Concurrent or restarted runs are now
+idempotent at the storage layer, not just by the `--only-missing` query. Index
+added to `load_to_postgres.py` so a rebuild keeps it. Relaunched a single runner.
+
+**The payoff (Trump 2nd term, the original motivation):** the impromptu set grows
+from **22** titled press conferences to **478** at spontaneity ≥ 0.5 and **165**
+at ≥ 0.7 — i.e. 7.5×–22× more spontaneous material. The small-n problem (n≈10–22)
+that made a 2nd-term trajectory un-runnable is resolved; there's now real power to
+run the Berisha markers / discourse-complexity trajectory on both Trump terms.
+
+---
+
 ## 2026-06-23 — Non-voice filter (`presidential_voice` flag)
 
 Eyeballing the corpus surfaced material that is **not in the president's spoken

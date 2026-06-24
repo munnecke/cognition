@@ -269,7 +269,11 @@ def write_row(conn, speech_id, model, result):
             "INSERT INTO llm_extractions "
             "(speech_id, model, prompt_version, extraction_type, "
             " extracted_pattern, confidence_score, raw) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            # idempotent against the unique index on
+            # (speech_id, extraction_type, prompt_version, model) — concurrent
+            # runs / re-scores can't create duplicate rows.
+            "ON CONFLICT (speech_id, extraction_type, prompt_version, model) DO NOTHING",
             (speech_id, model, PROMPT_VERSION, EXTRACTION_TYPE,
              result["label"], result["spontaneity"], json.dumps(result)),
         )
