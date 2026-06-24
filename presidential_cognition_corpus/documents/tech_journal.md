@@ -4,6 +4,93 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-24 — Discourse-complexity LOWESS trajectory on the impromptu set
+
+The multi-indicator composite ( complexity = mean(z(unique), z(idea_density),
+-z(NS+fillers)) ), within-person, regressed on years-into-administration,
+LOWESS-smoothed — same instrument as the 2026-06-22 news-conference trajectory,
+but on the spontaneity ≥ 0.5 impromptu set. `scripts/latent_trajectory_spontaneity.py`
+(imports `latent_trajectory` and swaps only the document selection). Figure:
+`documents/discourse_complexity_trajectory_impromptu.png`.
+
+| presidency | n | slope/yr | R | p |
+|---|---|---|---|---|
+| **Ronald Reagan** | 198 | **−0.034** | **−0.15** | **.034** |
+| G.H.W. Bush | 196 | −0.044 | −0.13 | .069 |
+| Clinton | 267 | +0.012 | +0.07 | .267 |
+| G.W. Bush | 173 | +0.012 | +0.06 | .423 |
+| **Barack Obama** | 175 | +0.054 | +0.28 | **.000** |
+| Trump 1st | 181 | −0.015 | −0.03 | .740 |
+| Trump 2nd | 181 | +0.104 | +0.08 | .318 |
+| Biden | 31 | +0.012 | +0.02 | .902 |
+
+**Reagan is the only significant DECLINE** (p=.034) — consistent with the
+marker-level result and the original news-conference trajectory, now on a 4×
+larger genre-diverse sample. It is **attenuated** vs the news-conference frame
+(R=−0.15 here vs −0.45 then; slope −0.034 vs −0.088/yr) for two compounding
+reasons: (a) genre heterogeneity in the impromptu set adds per-doc noise, and
+(b) `idea_density` does not co-move with Reagan's decline (already noted
+2026-06-22) so it dilutes the composite — the signal is carried by the two
+validated Berisha markers, not idea density. **Obama shows a significant
+*increase*** (p<.001) — a genuine rising-complexity trend, the opposite of
+decline, not a false alarm. **Trump 2nd term is a clean null at real n=181** (was
+~10) — the small-n problem is solved without manufacturing a signal.
+
+Net across both analyses (markers + composite): on the LLM-selected impromptu
+set, **Reagan uniquely shows the decline signature, and it survives a 4× sample
+expansion across genres** — strengthening confidence it is real, not a
+news-conference artifact.
+
+---
+
+## 2026-06-24 — Berisha markers on the LLM-selected impromptu set
+
+With the corpus fully scored, re-ran the validated Berisha markers (unique words;
+NS-nouns+fillers over chronological president-only answers, first 1,400 words,
+Pearson vs index with >2 SD outlier drop) but selecting documents by the
+spontaneity classifier instead of the title="news conference" filter.
+`scripts/cohort_spontaneity.py` (reuses `replicate_berisha` + `segment_speaker`;
+selection is the only change).
+
+**Threshold matters — and revealed a genre effect.** At **≥0.7** every president
+went null, *including Reagan*. Cause (verified): a formal news conference opens
+with a prepared statement, so the classifier scores it **"mixed" (~0.54)** — only
+**3 of Reagan's 138** news-conference docs clear 0.7. The ≥0.7 set is therefore a
+*different genre* (brief pure-Q&A reporter exchanges, ~0.88), which excludes the
+very documents Berisha studied. The decline signal is **genre-specific**: it lives
+in sustained formal-news-conference Q&A, not short exchanges.
+
+**At ≥0.5** (which includes the "mixed" news conferences) the result is clean and
+strong:
+
+| presidency | n | unique words | NS+fillers |
+|---|---|---|---|
+| **Ronald Reagan** | **198** | **−0.22 (.003)** | **+0.23 (.001)** |
+| G.H.W. Bush | 196 | −0.00 ns | +0.05 ns |
+| Clinton | 267 | −0.00 ns | +0.13 (.042) |
+| G.W. Bush | 173 | +0.05 ns | −0.07 ns |
+| Obama | 175 | +0.13 ns | −0.22 (.004, anti-decline) |
+| Trump 1st | 181 | +0.12 ns | +0.10 ns |
+| Trump 2nd | 181 | +0.08 ns | −0.04 ns |
+| Biden | 31 | +0.28 ns | +0.26 ns |
+
+**Reagan alone shows the full coherent decline signature** (both markers
+significant, correct direction) — now on a **4× larger, genre-diverse sample**
+(198 vs 46 news conferences) and with *stronger* significance (p=.003/.001 vs
+.006/.004) despite an attenuated coefficient (−0.22 vs −0.41; expected from the
+added genre heterogeneity). Single-marker hits (Clinton ns+fillers; Obama, which
+is anti-decline) **fail the coherence test**, exactly as before. Crucially,
+**Trump 2nd term now has real n (181, was ~10)** and is a clean null — the small-n
+problem the classifier was built to solve is resolved, and it didn't manufacture
+a signal.
+
+Lesson for the method: "spontaneity ≥ θ" is not a single knob — θ selects a genre
+mix. **≥0.5 is the right operationalization for the Berisha frame** (keeps the
+news conferences); ≥0.7 measures a different, narrower register. Figures:
+`documents/impromptu_{unique_words,ns_plus_fillers}_grid.png` (regenerated at 0.5).
+
+---
+
 ## 2026-06-24 — Concurrency dedup + the Trump small-n payoff
 
 Two `run_spontaneity_overnight.sh` instances ended up running at once (an earlier
