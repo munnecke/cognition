@@ -358,6 +358,8 @@ def main():
                      "(%.1f docs/sec)", written, skipped,
                      100 * skipped / max(1, written + skipped), dt,
                      written / max(1e-9, dt))
+            for line in llm.usage_report().splitlines():   # tokens + commercial-cost estimate
+                LOG.info("%s", line)
 
 
 if __name__ == "__main__":

@@ -48,6 +48,22 @@ inherits the full chain, forward and backward.
 - **Gottschalk, Uliana & Gilbert (1988)** — cognitive impairment inferred from
   presidential candidates' campaign-debate behavior (Public Admin Rev). Early
   precedent for analyzing political speech for cognitive markers.
+- **Bedi et al. (2015), *npj Schizophrenia*** — semantic coherence (cosine between
+  consecutive phrases) predicting psychosis onset. Direct parent of the planned
+  semantic-coherence ("half-life of a thought") layer (see
+  `documents/coherence_layer_plan.md`).
+- **Elvevåg, Foltz, Weinberger & Goldberg (2007), *Schizophr. Res.*** — LSA-based
+  semantic coherence separating patients from controls. Method ancestor for the
+  coherence layer.
+- **Mota et al. (2012/2014), *PLoS ONE*** — speech-graph connectedness for
+  psychosis/cognition. Alternative operationalization for the coherence layer.
+- **Graesser & McNamara — Coh-Metrix** — local vs global cohesion indices; frames
+  the coherence layer's local/global split.
+- **Andreasen (1986)** — Thought, Language and Communication (TLC) scale; defines
+  *tangentiality*/*derailment*, the clinical constructs the coherence layer
+  approximates.
+- **Levelt (1983); Shriberg (1994)** — self-repair structure and the disfluency
+  taxonomy; ancestors for the (caveated) self-interruption sub-measure.
 - **Pennebaker (function-word / pronoun analysis)** — psychological and cognitive
   signal in closed-class words; motivates the pronoun and function-word features.
 - **Engelbart (1962)** — *Augmenting Human Intellect: A Conceptual Framework*. The
