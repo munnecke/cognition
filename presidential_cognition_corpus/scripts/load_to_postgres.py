@@ -102,6 +102,12 @@ CREATE TABLE IF NOT EXISTS llm_extractions (
     created_at      timestamptz DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS llm_extractions_speech_idx ON llm_extractions (speech_id);
+-- One extraction per (speech, type, prompt, model): makes concurrent/restarted
+-- scoring runs idempotent (the scorers INSERT ... ON CONFLICT DO NOTHING), so a
+-- doc can never get two rows for the same model+prompt. (Without this, two
+-- overlapping --only-missing runs once produced ~9.8k duplicate spontaneity rows.)
+CREATE UNIQUE INDEX IF NOT EXISTS llm_extractions_uniq
+    ON llm_extractions (speech_id, extraction_type, prompt_version, model);
 
 -- promote newer feature columns on pre-existing tables (idempotent)
 ALTER TABLE linguistic_features ADD COLUMN IF NOT EXISTS idea_density real;

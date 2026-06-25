@@ -38,7 +38,9 @@ class LocalLLM:
     def __init__(self, base_url: str = DEFAULT_BASE_URL,
                  api_key: str = DEFAULT_API_KEY,
                  model: str = DEFAULT_MODEL,
-                 temperature: float = DEFAULT_TEMP):
+                 temperature: float = DEFAULT_TEMP,
+                 timeout: Optional[float] = None,
+                 max_retries: int = 2):
         self.base_url = base_url
         self.model = model
         self.temperature = temperature
@@ -49,7 +51,14 @@ class LocalLLM:
                 "The 'openai' package is required for local LLM calls. "
                 "Install with:  pip install openai"
             ) from e
-        self._client = OpenAI(base_url=base_url, api_key=api_key)
+        # A request timeout matters for batch jobs: without it, a server
+        # restart or a hung generation blocks the whole run indefinitely
+        # (observed). Caller picks a bound; the client raises on exceeding it.
+        self._client = OpenAI(base_url=base_url, api_key=api_key,
+                              timeout=timeout, max_retries=max_retries)
+        # Cumulative token accounting across all calls on this client, so a batch
+        # run can report exactly what it would have cost on a commercial API.
+        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
 
     def chat(self, prompt: str, system: Optional[str] = None,
              max_tokens: int = 512, temperature: Optional[float] = None) -> str:
@@ -63,16 +72,40 @@ class LocalLLM:
             temperature=self.temperature if temperature is None else temperature,
             max_tokens=max_tokens,
         )
+        u = getattr(resp, "usage", None)
+        if u is not None:
+            self.usage["calls"] += 1
+            self.usage["prompt_tokens"] += getattr(u, "prompt_tokens", 0) or 0
+            self.usage["completion_tokens"] += getattr(u, "completion_tokens", 0) or 0
         return (resp.choices[0].message.content or "").strip()
 
+    # Representative commercial rate cards ($ per 1M tokens, input/output) for a
+    # "what would this have cost" estimate — local runs are electricity-only.
+    RATE_CARDS = {
+        "claude-haiku-4.5": (1.00, 5.00),
+        "claude-sonnet-4.6": (3.00, 15.00),
+        "claude-opus-4.8": (5.00, 25.00),
+    }
+
+    def usage_report(self) -> str:
+        u = self.usage
+        pt, ct = u["prompt_tokens"], u["completion_tokens"]
+        lines = [f"tokens: {u['calls']} calls, {pt:,} in + {ct:,} out = {pt + ct:,} total"]
+        for name, (pin, pout) in self.RATE_CARDS.items():
+            cost = pt / 1e6 * pin + ct / 1e6 * pout
+            lines.append(f"  est. {name}: ${cost:,.2f}  (Batch -50%: ${cost / 2:,.2f})")
+        return "\n".join(lines)
+
     def json_chat(self, prompt: str, system: Optional[str] = None,
-                  max_tokens: int = 512) -> dict:
+                  max_tokens: int = 512, temperature: Optional[float] = None) -> dict:
         """
         Ask for JSON and parse it. Falls back to extracting the first {...} block
-        if the model wraps the JSON in prose.
+        if the model wraps the JSON in prose. `temperature` overrides the default
+        (useful for a retry that perturbs a deterministic empty/garbled reply).
         """
         sys = (system or "") + "\nRespond with ONLY valid JSON. No prose, no code fences."
-        raw = self.chat(prompt, system=sys.strip(), max_tokens=max_tokens)
+        raw = self.chat(prompt, system=sys.strip(), max_tokens=max_tokens,
+                        temperature=temperature)
         raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         try:
             return json.loads(raw)

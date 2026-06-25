@@ -4,6 +4,289 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-24 — Affect layer (anger / empathy / evasiveness / intensity)
+
+`scripts/llm_affect.py` — the interpretive affect layer, modeled on the
+spontaneity classifier (Qwen2.5-7B, `llm_extractions`, one row per dimension,
+`prompt_version='affect-v1'`, idempotent). Four dimensions, scored 0..1 in one
+LLM call: **anger** (outward hostility), **empathy** (warmth/compassion),
+**evasiveness** (dodging the question — needs the Q beside the A), **emotional
+intensity** (arousal regardless of valence). Complements the deterministic VADER
+valence with signals VADER can't see.
+
+Design: **blind to identity** (no name/title in the prompt — affect is where
+political priors leak most, per the coded-first principle). Input is **Q&A pairs**
+(`qa_pairs`) so evasiveness can be judged answer-vs-question; for non-Q&A speech
+(rallies, addresses) it falls back to the president's full monologue and drops
+evasiveness. A bug caught in smoke-test: the first fallback used
+`segment_speaker.president_answers`, which returns *empty* for a monologue (it
+only keeps answers after a reporter question), so rallies/memorials scored
+nothing — added `_president_speech()` (all president turns, or the whole body when
+there are no speaker labels) to fix it.
+
+Face validity (smoke-test): Peace-Officers Memorial **empathy 0.60** vs ~0.10
+elsewhere; rally/memorial intensity > calm-diplomatic baseline; evasiveness ~0.4
+on non-committal diplomatic Q&A. Anger reads conservative (Qwen is cautious; the
+900-word cap can miss a rally's later attacks) — a candidate for a v2 prompt tune,
+as spontaneity needed. Token-cost is auto-reported per run (`llm.usage_report`).
+Ready to run on the impromptu set (`--only-missing --min-spont 0.5`); deferred
+until the coherence embedding run finishes to avoid GPU contention on one LM Studio.
+
+---
+
+## 2026-06-24 — Discourse-complexity LOWESS trajectory on the impromptu set
+
+The multi-indicator composite ( complexity = mean(z(unique), z(idea_density),
+-z(NS+fillers)) ), within-person, regressed on years-into-administration,
+LOWESS-smoothed — same instrument as the 2026-06-22 news-conference trajectory,
+but on the spontaneity ≥ 0.5 impromptu set. `scripts/latent_trajectory_spontaneity.py`
+(imports `latent_trajectory` and swaps only the document selection). Figure:
+`documents/discourse_complexity_trajectory_impromptu.png`.
+
+| presidency | n | slope/yr | R | p |
+|---|---|---|---|---|
+| **Ronald Reagan** | 198 | **−0.034** | **−0.15** | **.034** |
+| G.H.W. Bush | 196 | −0.044 | −0.13 | .069 |
+| Clinton | 267 | +0.012 | +0.07 | .267 |
+| G.W. Bush | 173 | +0.012 | +0.06 | .423 |
+| **Barack Obama** | 175 | +0.054 | +0.28 | **.000** |
+| Trump 1st | 181 | −0.015 | −0.03 | .740 |
+| Trump 2nd | 181 | +0.104 | +0.08 | .318 |
+| Biden | 31 | +0.012 | +0.02 | .902 |
+
+**Reagan is the only significant DECLINE** (p=.034) — consistent with the
+marker-level result and the original news-conference trajectory, now on a 4×
+larger genre-diverse sample. It is **attenuated** vs the news-conference frame
+(R=−0.15 here vs −0.45 then; slope −0.034 vs −0.088/yr) for two compounding
+reasons: (a) genre heterogeneity in the impromptu set adds per-doc noise, and
+(b) `idea_density` does not co-move with Reagan's decline (already noted
+2026-06-22) so it dilutes the composite — the signal is carried by the two
+validated Berisha markers, not idea density. **Obama shows a significant
+*increase*** (p<.001) — a genuine rising-complexity trend, the opposite of
+decline, not a false alarm. **Trump 2nd term is a clean null at real n=181** (was
+~10) — the small-n problem is solved without manufacturing a signal.
+
+Net across both analyses (markers + composite): on the LLM-selected impromptu
+set, **Reagan uniquely shows the decline signature, and it survives a 4× sample
+expansion across genres** — strengthening confidence it is real, not a
+news-conference artifact.
+
+---
+
+## 2026-06-24 — Berisha markers on the LLM-selected impromptu set
+
+With the corpus fully scored, re-ran the validated Berisha markers (unique words;
+NS-nouns+fillers over chronological president-only answers, first 1,400 words,
+Pearson vs index with >2 SD outlier drop) but selecting documents by the
+spontaneity classifier instead of the title="news conference" filter.
+`scripts/cohort_spontaneity.py` (reuses `replicate_berisha` + `segment_speaker`;
+selection is the only change).
+
+**Threshold matters — and revealed a genre effect.** At **≥0.7** every president
+went null, *including Reagan*. Cause (verified): a formal news conference opens
+with a prepared statement, so the classifier scores it **"mixed" (~0.54)** — only
+**3 of Reagan's 138** news-conference docs clear 0.7. The ≥0.7 set is therefore a
+*different genre* (brief pure-Q&A reporter exchanges, ~0.88), which excludes the
+very documents Berisha studied. The decline signal is **genre-specific**: it lives
+in sustained formal-news-conference Q&A, not short exchanges.
+
+**At ≥0.5** (which includes the "mixed" news conferences) the result is clean and
+strong:
+
+| presidency | n | unique words | NS+fillers |
+|---|---|---|---|
+| **Ronald Reagan** | **198** | **−0.22 (.003)** | **+0.23 (.001)** |
+| G.H.W. Bush | 196 | −0.00 ns | +0.05 ns |
+| Clinton | 267 | −0.00 ns | +0.13 (.042) |
+| G.W. Bush | 173 | +0.05 ns | −0.07 ns |
+| Obama | 175 | +0.13 ns | −0.22 (.004, anti-decline) |
+| Trump 1st | 181 | +0.12 ns | +0.10 ns |
+| Trump 2nd | 181 | +0.08 ns | −0.04 ns |
+| Biden | 31 | +0.28 ns | +0.26 ns |
+
+**Reagan alone shows the full coherent decline signature** (both markers
+significant, correct direction) — now on a **4× larger, genre-diverse sample**
+(198 vs 46 news conferences) and with *stronger* significance (p=.003/.001 vs
+.006/.004) despite an attenuated coefficient (−0.22 vs −0.41; expected from the
+added genre heterogeneity). Single-marker hits (Clinton ns+fillers; Obama, which
+is anti-decline) **fail the coherence test**, exactly as before. Crucially,
+**Trump 2nd term now has real n (181, was ~10)** and is a clean null — the small-n
+problem the classifier was built to solve is resolved, and it didn't manufacture
+a signal.
+
+Lesson for the method: "spontaneity ≥ θ" is not a single knob — θ selects a genre
+mix. **≥0.5 is the right operationalization for the Berisha frame** (keeps the
+news conferences); ≥0.7 measures a different, narrower register. Figures:
+`documents/impromptu_{unique_words,ns_plus_fillers}_grid.png` (regenerated at 0.5).
+
+---
+
+## 2026-06-24 — Concurrency dedup + the Trump small-n payoff
+
+Two `run_spontaneity_overnight.sh` instances ended up running at once (an earlier
+runner survived a `pkill`; the date-priority chain started a second). Both score
+with `--only-missing`, which is a check-then-write race: each reads "unscored,"
+both write → **9,785 duplicate rows** in `llm_extractions`, concentrated in the
+date range they overlapped (bush43 fully, clinton partially). Reagan/Bush41 (done
+before the second started) and Trump (scored once by the priority pass) were clean.
+
+Fix: killed both, deduped (kept lowest `id` per (speech_id, extraction_type,
+prompt_version, model)), added a **UNIQUE index** on that tuple, and made the
+scorer INSERT `... ON CONFLICT DO NOTHING`. Concurrent or restarted runs are now
+idempotent at the storage layer, not just by the `--only-missing` query. Index
+added to `load_to_postgres.py` so a rebuild keeps it. Relaunched a single runner.
+
+**The payoff (Trump 2nd term, the original motivation):** the impromptu set grows
+from **22** titled press conferences to **478** at spontaneity ≥ 0.5 and **165**
+at ≥ 0.7 — i.e. 7.5×–22× more spontaneous material. The small-n problem (n≈10–22)
+that made a 2nd-term trajectory un-runnable is resolved; there's now real power to
+run the Berisha markers / discourse-complexity trajectory on both Trump terms.
+
+---
+
+## 2026-06-23 — Non-voice filter (`presidential_voice` flag)
+
+Eyeballing the corpus surfaced material that is **not in the president's spoken
+voice** — third-person White House comms output: disaster-declaration approvals
+("President Donald J. Trump Approves California Disaster Declaration"), award
+announcements, First/Second-Lady press releases, staff-only press briefings
+(Press Secretary McEnany), Readouts, Joint Statements, Messages to Congress.
+Source check: **590 of 591 are `whitehouse_archive`** — the Trump/NARA ingest the
+HANDOFF flagged as never spoken-category-filtered (APP/Miller were filtered at
+collection, so they're clean). These would skew any corpus-wide measure and waste
+LLM time, and the classifier would (correctly) score them ~0.1 anyway.
+
+`scripts/flag_nonvoice.py` adds a durable derived boolean `speeches.presidential_
+voice` (default TRUE; FALSE for non-voice), idempotent + re-runnable. Matching is
+**title-anchored and conservative** (user chose "precise, low false-positive"):
+the title must START WITH a written-instrument/comms label, or be a third-person
+"<Official> <Name> …" headline lacking any spoken marker — and we KEEP anything
+explicitly spoken "by [the] President/Vice President". Final: **575 flagged**
+(~1.2%), all `whitehouse_archive`, 0 APP.
+
+Two bugs caught while tuning the predicate:
+- A president-led "Press Briefing by President Biden, …" (the one APP match) is
+  real voice — added the "by President/VP" carve-out so it (and 11 like it) stay,
+  while 57 staff-only briefings remain excluded.
+- **Postgres regex word boundary is `\y`, not `\b`** (`\b` = backspace, silently
+  never matches). The negative guards used `\b`; switched to `\y`. No harm had
+  occurred (the archive titles real remarks "Remarks by President …", which never
+  hit the third-person arm), but the guard now actually works.
+
+Wired into the scorer (`fetch_speeches` filters `presidential_voice`) and the
+overnight runner's remaining-count. Voice-only corpus: **21,956** (was 22,212).
+Re-run `flag_nonvoice.py` after any Postgres reload (it's a derived column).
+
+---
+
+## 2026-06-23 — Spontaneity classifier: model bake-off + corpus-wide run
+
+The classifier (below) was built defaulting to gemma-4-26b, but gemma proved
+**too slow at scale**, so we ran a four-model bake-off on a labelled 6-doc set
+(2 scripted / 2 mixed / 2 spontaneous), scoring BOTH accuracy and throughput:
+
+| model | accuracy | speed | verdict |
+|---|---|---|---|
+| llama-3.2-3b | can't discriminate (constant "mixed") | fast | rejected |
+| gemma-4-26b-a4b | 5/6 | **~11 s/doc** | accurate but unscalable |
+| gte-qwen2-7b | 0/6 (non-JSON, degenerates to looping CJK) | slow | embedding model, rejected |
+| qwen2.5-**coder**-7b | 2/6 (over-calls everything spontaneous) | fast | wrong variant, rejected |
+| **Qwen2.5-7B-Instruct (general, MLX 4-bit)** | **5/6** | **~3-4 s/doc** | **chosen** |
+
+**Why gemma is slow — diagnosed from LM Studio logs.** gemma-4-26b-a4b is a
+*reasoning* model with **sliding-window attention**; SWA defeats the prompt
+cache ("cache reuse is not supported … forcing full prompt re-processing"), so
+the full ~2.3k-token prompt is re-encoded **every doc** at ~224 tok/s ≈ 11 s.
+Reloading the model didn't help (it's architectural, not state). gemma also
+*degenerated into endless reasoning* on a ~5% tail of short ceremony docs,
+emitting empty content (finish_reason='length') — not fixable by more tokens or
+by disabling thinking (the knobs are ignored). A non-SWA instruct model (Qwen)
+gets prefix-cache reuse and, as an **MLX build on Apple Silicon**, is markedly
+faster on prompt processing — the bottleneck. GPU pegs at 100% (gemma did not).
+
+**Prompt v2.** Sharpened the mixed-vs-spontaneous boundary: a brief one/two-line
+framing before pure Q&A is *spontaneous* (0.8-1.0), not mixed — Qwen had been
+collapsing all interactive docs to 0.5. This recovered the top band and took it
+from 4/6 → 5/6. `PROMPT_VERSION='spontaneity-v2'`.
+
+**Robustness fixes (this session):** `excerpt` capped at `--max-words` (now
+**800** — benchmarked sweet spot: same accuracy as 1500, less prompt-eval; 500
+broke); a **request timeout** + `max_retries` on the LLM client (a mid-run server
+restart had hung the whole batch); retry-once-then-skip+log on empty output; and
+a **key-tolerant score parser** — the 4-bit fine-tune occasionally misspells the
+key (`spontivity`) while otherwise returning correct JSON, so we accept any
+numeric `spont*` key rather than discard a good judgment.
+
+**Corpus-wide overnight run.** `scripts/run_spontaneity_overnight.sh` — resilient,
+resumable, batched (`--limit 500`, bounded memory), with a stuck-detector so it
+won't hot-loop a dead endpoint. Scoring **all 22,208 canonical docs ≥200 words,
+all 8 presidencies** at ~3-4 s/doc (~20 h wall → spans a couple of nights;
+`--only-missing` resumes). Early distribution looks right (scripted ≈0.06,
+mixed ≈0.51, spontaneous ≈0.85). Model of record: `josiefied-qwen2.5-7b-
+instruct-abliterated-v2-4-bit` (a general-instruct build; the stock
+`Qwen2.5-7B-Instruct` MLX 4-bit is the reproducible equivalent).
+
+**Next:** once scored, pick an impromptu threshold from the score distribution,
+confirm the impromptu set grows (Trump 2nd term was 22 press-confs → expect many),
+and re-run the Berisha/trajectory analyses on the LLM-selected set.
+
+---
+
+## 2026-06-22 — LLM spontaneity classifier (the smarter impromptu selector)
+
+Built `scripts/llm_spontaneity.py` to address the Trump small-n problem: the
+"impromptu" set used by the Berisha-style longitudinal markers was defined by a
+brittle *title* filter (title ≈ "news conference"), which gives only **22**
+press conferences for Trump's 2nd term — too few to regress. The classifier
+reads the actual text and scores each transcript's spontaneity on 0..1, so the
+impromptu set becomes `spontaneity ≥ threshold` — pulling in exchanges-with-
+reporters, Q&A, interviews, town halls already in the corpus.
+
+**Storage / provenance.** One row per (speech, model, prompt_version) in
+`llm_extractions`: `extraction_type='spontaneity'`, `extracted_pattern`=label
+(scripted/mixed/spontaneous), `confidence_score`=score, `raw`=full JSON
+(reason + evidence quote + excerpt provenance). Kept separate from the
+deterministic `classify_event_type.prepared_or_impromptu` (structural, in
+`speeches`) so a model/prompt change can't move the longitudinal trend lines.
+Idempotent via `--only-missing`; restartable; `--sample N` prints without writing.
+
+**Model choice — benchmarked, and it overturned the plan.** The handoff planned
+to use the *fast* `llama-3.2-3b`. On a labelled sample of **full transcripts**
+the 3B model **cannot discriminate**: with a loose prompt it defaulted to
+"scripted", and with a sharpened prompt it collapsed to a constant "mixed,
+interactive" — labelling even a scripted Inaugural Address as a Q&A it
+hallucinated. `gemma-4-26b` was correct on every case (Inaugural/Address-to-
+Nation → scripted; news conference → mixed+interactive with accurate reasoning).
+A wrong spontaneity label poisons the set we then select from, so **accuracy wins
+over speed here**: default is now gemma (~4 s/doc; llama left as a `--model`
+override). The earlier "verified llama tags spontaneity" note held only for short,
+clean inputs, not real transcripts.
+
+**A gemma quirk, characterized.** gemma deterministically returns an *empty*
+completion on a ~5% tail of inputs (measured 2/40 on a random candidate sample) —
+specifically short ceremony/transition "Exchange With Reporters" remarks. It is
+not load (3 sequential retries empty), not temperature (empty at 0.0–0.8), not
+content-safety (the text is benign signing-ceremony remarks), and not data
+corruption (the stored text is clean — the "s-less" rendering I first saw was a
+*psql display* glitch, `full_text` is intact). An assistant-prefill (`{"reason":`)
+breaks the empty but then degenerates ("by-by-by-by"). Handling: retry once with a
+temperature bump (catches genuine transients), then **skip+log** the persistent
+failures — they are tiny docs well below the 1,400-word analysis bar, so the loss
+is benign. `llm.json_chat` gained an optional `temperature` arg for the retry.
+
+**Excerpt sampling.** Head (60%) + middle (40%) slice capped at `--max-words`
+(default 1500) so long Trump transcripts can't blow up latency/memory (the
+HANDOFF OOM caution) while still surfacing Q&A that starts after a long opening.
+
+**Run in progress.** Scoring Trump's **2nd term** candidate-spontaneous genres
+(`--presidents trump --since 2021-01-20`, 565 docs). Added `--since/--until`
+date filters (natural for this date-keyed longitudinal corpus). Next: pick a
+threshold from the score distribution, confirm the 2nd-term impromptu set grows
+from 22 → many, then scale to 1st term / the full cohort and re-run the
+trajectory analyses on the LLM-selected set.
+
+---
+
 ## 2026-06-22 — Latent integrity trajectory, all 8 presidencies
 
 Re-ran the multi-indicator integrity composite ( z(unique) + z(idea_density) −

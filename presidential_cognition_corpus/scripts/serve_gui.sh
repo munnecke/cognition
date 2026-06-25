@@ -9,6 +9,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Activate the project venv so `marimo` resolves (it's only in .venv/bin).
+# Guarded because set -u is active and .venv may be absent; pgweb is a system
+# binary and does not depend on the venv.
+if [ -f .venv/bin/activate ]; then
+  source .venv/bin/activate
+fi
+
 DB="${PG_DB:-presidential_speech}"
 mkdir -p logs
 
