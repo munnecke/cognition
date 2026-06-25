@@ -4,6 +4,36 @@ A running log of methods, experiments, and results. Newest entries at the top.
 
 ---
 
+## 2026-06-24 — Affect layer (anger / empathy / evasiveness / intensity)
+
+`scripts/llm_affect.py` — the interpretive affect layer, modeled on the
+spontaneity classifier (Qwen2.5-7B, `llm_extractions`, one row per dimension,
+`prompt_version='affect-v1'`, idempotent). Four dimensions, scored 0..1 in one
+LLM call: **anger** (outward hostility), **empathy** (warmth/compassion),
+**evasiveness** (dodging the question — needs the Q beside the A), **emotional
+intensity** (arousal regardless of valence). Complements the deterministic VADER
+valence with signals VADER can't see.
+
+Design: **blind to identity** (no name/title in the prompt — affect is where
+political priors leak most, per the coded-first principle). Input is **Q&A pairs**
+(`qa_pairs`) so evasiveness can be judged answer-vs-question; for non-Q&A speech
+(rallies, addresses) it falls back to the president's full monologue and drops
+evasiveness. A bug caught in smoke-test: the first fallback used
+`segment_speaker.president_answers`, which returns *empty* for a monologue (it
+only keeps answers after a reporter question), so rallies/memorials scored
+nothing — added `_president_speech()` (all president turns, or the whole body when
+there are no speaker labels) to fix it.
+
+Face validity (smoke-test): Peace-Officers Memorial **empathy 0.60** vs ~0.10
+elsewhere; rally/memorial intensity > calm-diplomatic baseline; evasiveness ~0.4
+on non-committal diplomatic Q&A. Anger reads conservative (Qwen is cautious; the
+900-word cap can miss a rally's later attacks) — a candidate for a v2 prompt tune,
+as spontaneity needed. Token-cost is auto-reported per run (`llm.usage_report`).
+Ready to run on the impromptu set (`--only-missing --min-spont 0.5`); deferred
+until the coherence embedding run finishes to avoid GPU contention on one LM Studio.
+
+---
+
 ## 2026-06-24 — Discourse-complexity LOWESS trajectory on the impromptu set
 
 The multi-indicator composite ( complexity = mean(z(unique), z(idea_density),
